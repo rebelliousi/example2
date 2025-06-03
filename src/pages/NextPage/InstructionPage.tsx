@@ -1,40 +1,23 @@
 // pages/NextPage/NextPage.tsx
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDocument } from '../../hooks/Documents/useDocuments';
-import Layout from '../Layout/Layout'; // Layout'u import et
+import Layout from '../Layout/Layout';
+import { useAuthStore } from '../../store/useAuthStore';
+
 
 const NextPage: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const [isAgreed, setIsAgreed] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn); // Access isLoggedIn state
   const { data, isLoading, isError } = useDocument();
-
-  useEffect(() => {
-  
- 
-    
-
-    const params = new URLSearchParams(location.search);
-    const loggedIn = params.get('loggedIn');
-
-    if (loggedIn === 'true') {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, [location.search]);
 
   const handleStartClick = () => {
     if (isAgreed) {
       if (!isLoggedIn) {
         navigate('/login');
       } else {
-
         navigate('/degree_information');
       }
     } else {
@@ -60,11 +43,7 @@ const NextPage: React.FC = () => {
   const maddeler = firstDocument?.description?.split("\r\n") || [];
 
   return (
-    <Layout
-      isLoggedIn={isLoggedIn}
-      isHomePage={false}
-  
-    >
+    <Layout isLoggedIn={isLoggedIn} isHomePage={false}>
       <div className="container mx-auto mt-14 p-4 min-h-screen">
         <div className="text-center mb-10">
           <h1 className='text-primaryText text-[18px] font-[400]'>

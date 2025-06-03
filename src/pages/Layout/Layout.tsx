@@ -1,38 +1,23 @@
-// pages/Layout/Layout.tsx
-
-import React, {useCallback,} from 'react';
-import {  useNavigate } from "react-router-dom";
+import React from 'react';
 import Main from "../../components/Main/Main";
 import Navbar from '../../components/Navbar/Navbar';
 
 interface LayoutProps {
   children: React.ReactNode;
   isHomePage: boolean;
-  isLoggedIn: boolean;
+  isLoggedIn: boolean; // Add isLoggedIn prop
   profileImage?: string;
-
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, isHomePage, isLoggedIn, profileImage, }) => {
-    const navigate = useNavigate();
-
-    const handleLogout = useCallback(() => {
-        navigate('/login', { replace: true }); 
-    }, [navigate]);
-
-    return (
-        <div>
-            <Navbar
-                isHomePage={isHomePage}
-                isLoggedIn={isLoggedIn}
-                profileImage={profileImage}
-                onLogout={handleLogout}
-            />
-            <Main>
-                {children}
-            </Main>
-        </div>
-    );
+const Layout: React.FC<LayoutProps> = ({ children, isHomePage, isLoggedIn, profileImage }) => {
+  return (
+    <div>
+      <Navbar isLoggedIn={isLoggedIn} isHomePage={isHomePage} profileImage={profileImage} /> {/* Pass isLoggedIn to Navbar */}
+      <Main>
+        {children}
+      </Main>
+    </div>
+  );
 };
 
 export default Layout;

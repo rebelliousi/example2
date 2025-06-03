@@ -1,5 +1,3 @@
-// components/Navbar/Navbar.tsx
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../../public/img/logo 1.png';
@@ -10,30 +8,24 @@ import { Avatar } from '@mui/material';
 
 interface NavbarProps {
   isHomePage: boolean;
-  isLoggedIn: boolean;
-  onLogout: () => void;
+  isLoggedIn: boolean; // Add isLoggedIn prop
   profileImage?: string;
- 
 }
 
 const Navbar: React.FC<NavbarProps> = ({
   isHomePage,
-  isLoggedIn,
-  onLogout,
+  isLoggedIn, // Use isLoggedIn prop
   profileImage,
-  
 }) => {
   const [profileModal, setProfileModal] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-
   const handleLogOut = useCallback(() => {
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
-    onLogout(); // Layout'tan gelen onLogout fonksiyonunu çağır
     navigate('/login', { replace: true });
-  }, [navigate, onLogout]);
+  }, [navigate]);
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
@@ -56,26 +48,18 @@ const Navbar: React.FC<NavbarProps> = ({
     setProfileModal((prev) => !prev);
   };
 
- 
-
   return (
     <nav className={`fixed top-0 left-0 right-0 bg-white ${isHomePage ? '' : ''}`}>
       <div className="container mx-auto py-4 flex items-center justify-between">
-       
         <div className="flex items-center justify-center space-x-1">
           <img src={logo} alt="" className='w-10' />
           <h1 className='text-[#4570EA] text-lg'>TITU</h1>
         </div>
 
-  
-       
-
-        {/* Login Yazısı */}
         <div className="text-right flex items-center relative">
           {isLoggedIn ? (
             <>
-               <div className="flex items-center mr-4">
-              
+              <div className="flex items-center mr-4">
                 <button onClick={handleProfileClick} className="relative">
                   <Avatar
                     alt="User Avatar"
@@ -91,7 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({
               {profileModal && (
                 <div
                   ref={dropdownRef}
-                  className={`absolute shadow-lg right-0 top-10 w-[230px] pb-4 table-content bg-white rounded-md transition-all duration-500 ease-in-out 
+                  className={`absolute shadow-lg right-0 top-10 w-[230px] pb-4 table-content bg-white rounded-md transition-all duration-500 ease-in-out
                     ${profileModal ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}`}
                 >
                   <div className="px-5 pt-3 text-center flex  flex-col items-center text-primaryText">
@@ -106,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     <div className='space-y-2'>
                       <h1 className="text-black font-semibold">Aman Amanow</h1>
                       <p className="text-sm text-gray-400">amanow@gmail.com</p>
-                    
+
                     </div>
 
                     <Button
