@@ -22,6 +22,7 @@ export default {
                 listItemHover: '#F8FAFC',
                 actionButtonHover: '#EAEFF4',
                 listBackground: '#F8FAFC',
+                headerBlue:'#4570EA'
             },
             container: {
                 center: true,
@@ -32,6 +33,9 @@ export default {
                 'sideways-rl': 'sideways-rl',
                 'sideways-lr': 'sideways-lr',
             },
+             fontFamily: {
+        'jaarta': ['Jaarta Sans', 'sans-serif'], 
+      },
         },
     },
     plugins: [forms],

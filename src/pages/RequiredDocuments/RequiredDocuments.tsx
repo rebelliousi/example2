@@ -7,7 +7,7 @@ import LoadingIndicator from "../../components/Status/LoadingIndicator";
 const RequiredDocuments: React.FC = () => {
   const { data, isLoading, isError } = useDocument();
 
-   if (isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-[800px] flex items-center justify-center">  {/* Changed here */}
         <LoadingIndicator />
@@ -16,7 +16,7 @@ const RequiredDocuments: React.FC = () => {
   }
 
   if (isError || !data || !data.results || data.results.length === 0) {
-    return <div>Error loading data or no data available.</div>;
+    return <div className="min-h-[800px]">Error loading data or no data available.</div>;
   }
 
   const firstDocument = data.results[0];

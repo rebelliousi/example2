@@ -20,3 +20,18 @@ export interface IDocument {
   description?: string;
   attachments?: number[];
 }
+
+export interface IAdmissionMajor {
+  id: number;
+  major: number;
+  major_name?: string;
+  order_number: number;
+  quota: number;
+  
+}
+
+export interface ITab {
+    id: number;
+    name: string;
+    link: string;
+}

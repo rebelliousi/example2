@@ -1,20 +1,15 @@
 import React from 'react';
 import Main from "../../components/Main/Main";
 import Navbar from '../../components/Navbar/Navbar';
+import { Outlet } from 'react-router-dom';
 
-interface LayoutProps {
-  children: React.ReactNode;
-  isHomePage: boolean;
-  isLoggedIn: boolean; // Add isLoggedIn prop
-  profileImage?: string;
-}
 
-const Layout: React.FC<LayoutProps> = ({ children, isHomePage, isLoggedIn, profileImage }) => {
+const Layout: React.FC = () => {
   return (
     <div>
-      <Navbar isLoggedIn={isLoggedIn} isHomePage={isHomePage} profileImage={profileImage} /> {/* Pass isLoggedIn to Navbar */}
+      <Navbar />
       <Main>
-        {children}
+     <Outlet/>
       </Main>
     </div>
   );
