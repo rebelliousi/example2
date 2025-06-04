@@ -112,7 +112,7 @@ function App() {
           <Route path="required_documents" element={<RequiredDocuments />} />
           <Route path="instruction_page" element={<InstructionPage />} />
           <Route path="login" element={<LoginPage />} />
-          <Route path="degree_information" element={<DegreeInformation />} />
+          <Route path="degree-information" element={<DegreeInformation />} />
         </Route>
       </Routes>
     </SnackbarProvider>

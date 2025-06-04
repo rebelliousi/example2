@@ -1,62 +1,62 @@
-import { Outlet, useParams } from 'react-router-dom';
-
-import { Container } from '@mui/material';
-import type { ITab } from '../../models/models';
+// AddMajorPlanLayout.tsx
+import { Outlet, useLocation } from 'react-router-dom';
+import Container from '../../components/Container/Container'; // Adjust path if needed
 import ArrowRightTabs from '../../components/Tabs/ArrowRightTabs';
+import React from 'react';
 
+const AddMajorPlanLayout: React.FC = () => {
+    const location = useLocation();
 
-
-const AddMajorPlanPage = () => {
-    const { major_plan_id } = useParams();
-    const tabs: ITab[] = [
+    // Define your tabs configuration here.  Crucially, *no* styling is forced.
+    const tabs = [
         {
             id: 1,
             name: 'Saylan ugry',
-            link: `/department-head/major-plans/add/general`,
+            link: '/degree-information',
         },
         {
             id: 2,
             name: 'General information',
-            link: `/department-head/major-plans/add/${major_plan_id}/subjects`,
+            link: '/general-information',
         },
         {
             id: 3,
             name: 'Ene-ata',
-            link: `/department-head/major-plans/add/${major_plan_id}/exams`,
+            link: '/ene-ata',
         },
         {
             id: 4,
             name: 'Bilimi',
-            link: `/department-head/major-plans/add/${major_plan_id}/table`,
+            link: '/bilimi',
         },
         {
             id: 5,
             name: 'Awards',
-            link: `/department-head/major-plans/add/${major_plan_id}/table`,
+            link: '/awards',
         },
         {
             id: 6,
             name: 'Other Documents',
-            link: `/department-head/major-plans/add/${major_plan_id}/table`,
+            link: '/other-documents',
         },
     ];
 
     return (
-        <div>
-            <Container>
-                <div className="max-2xl:px-5 text-primaryText">
-                    <div className="h-20 flex items-center">
-                        
-                    </div>
-                    <div className="pb-4">
-                        <ArrowRightTabs disabled={true} tabs={tabs} />  {/* disabled={true} burada */}
-                    </div>
-                    {/* Geçici placeholder veya statik içerik */}
-                    <Outlet />
+        <Container>
+            <div className="min-h-screen p-8 lg:p-16 xl:p-24">
+                <div className="mb-4">
+                    <h1 className="text-headerBlue text-[14px] font-[500]">
+                        {/* You can dynamically set the title if needed */}
+                        Add Major Plan
+                    </h1>
                 </div>
-            </Container>
-        </div>
+
+                <ArrowRightTabs tabs={tabs} />
+
+                <Outlet /> {/* This is where the content of the child route will render */}
+            </div>
+        </Container>
     );
 };
 
-export default AddMajorPlanPage;
+export default AddMajorPlanLayout;

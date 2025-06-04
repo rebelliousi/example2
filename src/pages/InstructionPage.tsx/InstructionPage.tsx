@@ -16,7 +16,7 @@ const InstructionPage: React.FC = () => {
             if (!isLoggedIn) {
                 navigate('/login');
             } else {
-                navigate('/degree_information');
+                navigate('/infos/degree-information');
             }
         } else {
             alert('Please agree to the terms before starting.');
@@ -40,7 +40,7 @@ const InstructionPage: React.FC = () => {
     const maddeler = firstDocument?.description?.split("\r\n") || [];
 
     return (
-        <div className="container mx-auto mt-14 p-4 min-h-screen">
+        <div className="container mx-auto mt-14 p-4 ">
             <div className="text-center mb-10">
                 <h1 className='text-primaryText text-[18px] font-[400]'>
                     TURKMENISTANYN OGUZ HAN ADYNDAKY INZENER TEHNOLOGIYALAR UNIWERSITETI <br/> {year}- {year ? parseInt(year) + 1 : 'YYYY'} YYL

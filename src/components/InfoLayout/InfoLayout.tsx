@@ -1,0 +1,61 @@
+import { Outlet, NavLink } from 'react-router-dom';
+import Container from '../../components/Container/Container';
+import React from 'react';
+import ArrowRightTabs from '../Tabs/ArrowRightTabs';
+
+
+interface ITab { 
+  id: number;
+  name: string;
+  link: string;
+}
+
+const InfoLayout: React.FC = () => {
+  const tabs: ITab[] = [
+    {
+      id: 1,
+      name: 'Major',
+      link: `/infos/degree-information`,
+    },
+    {
+      id: 2,
+      name: 'General information',
+      link: `/infos/general-information`,
+    },
+    {
+      id: 3,
+      name: 'Parents',
+      link: `/infos/general-information`,
+    },
+    {
+      id: 4,
+      name: 'Education',
+      link: `/infos/general-information`,
+    },
+    {
+      id: 5,
+      name: 'Awards',
+      link: `/infos/general-information`,
+    },
+    {
+      id: 6,
+      name: 'Other Documents',
+      link: `/infos/general-information`,
+    },
+  ];
+
+  return (
+    <Container>
+      <div className="px-28 text-primaryText mt-20 text-[14px]">
+     
+        <div className="pb-4">
+                        <ArrowRightTabs  tabs={tabs} />
+                    </div>
+        <Outlet />
+      </div>
+  
+    </Container>
+  );
+};
+
+export default InfoLayout;

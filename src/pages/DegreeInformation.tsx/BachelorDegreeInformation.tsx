@@ -73,8 +73,8 @@ const DegreeInformationForm = () => {
   };
 
   return (
-    <Container>
-      <div className="min-h-screen p-8 lg:p-16 xl:p-24">
+    
+      <div className="pt-10 px-4">
         <div className="mb-4">
           <h1 className="text-headerBlue text-[14px] font-[500]">
             Degree Information
@@ -157,7 +157,7 @@ const DegreeInformationForm = () => {
 
           <div className="flex justify-end mt-10 space-x-2">
                <button
-              className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded"
+              className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
               onClick={handleSubmit}
               disabled={isAddingClient}
             >
@@ -174,8 +174,9 @@ const DegreeInformationForm = () => {
           </div>
         </Space>
       </div>
-    </Container>
+   
   );
 };
 
 export default DegreeInformationForm;
+
