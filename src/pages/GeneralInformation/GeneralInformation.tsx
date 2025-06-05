@@ -102,6 +102,7 @@ const GeneralInformationForm = () => {
     const handleSubmit = async () => {
         console.log("Form Data:", formData);
         console.log("Selected File:", selectedFile);
+            navigate("/infos/guardians-info");
 
         const formDataToSend = new FormData();
 
@@ -176,7 +177,7 @@ const GeneralInformationForm = () => {
             passport: null,
         });
 
-        navigate("/infos/general-information");
+
     };
 
     return (
@@ -431,7 +432,7 @@ const GeneralInformationForm = () => {
                 <div className="flex justify-end mt-12 space-x-5">
                     <Link to='/infos/degree-information'
                         className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
-                        onClick={() => navigate(-1)}
+                      
                     >
                         Previous
                     </Link>

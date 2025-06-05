@@ -6,6 +6,7 @@ import DegreeInformationForm from '../../pages/DegreeInformation.tsx/DegreeInfor
 import ClientListPage from '../../pages/Client/ClientListPage';
 import GeneralInformation from '../../pages/GeneralInformation/GeneralInformation';
 import GuardiansInfoPage from '../../pages/GuardiansInfo/GuardiansInfo';
+import EducationInfo from '../../pages/EducationInfo/EducationInfo';
 
 
 const InformationRoutes = () => {
@@ -17,6 +18,7 @@ const InformationRoutes = () => {
           <Route path="degree-information" element={<DegreeInformationForm />} />
            <Route path="general-information" element={<GeneralInformation />} />
            <Route path='guardians-info' element={<GuardiansInfoPage/>}/>
+            <Route path='education-info' element={<EducationInfo/>}/>
         </Route>
       </Routes>
     </Suspense>
