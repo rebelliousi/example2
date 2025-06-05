@@ -46,7 +46,7 @@ const InfoLayout: React.FC = () => {
 
   return (
     <Container>
-      <div className="px-28 text-primaryText mt-20 text-[14px]">
+      <div className=" text-primaryText mt-20 text-[14px]">
      
         <div className="pb-4">
                         <ArrowRightTabs  tabs={tabs} />

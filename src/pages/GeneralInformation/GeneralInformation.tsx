@@ -428,7 +428,7 @@ const GeneralInformationForm = () => {
                     </Space>
                 </div>
 
-                <div className="flex justify-end mt-12 space-x-7">
+                <div className="flex justify-end mt-12 space-x-5">
                     <Link to='/infos/degree-information'
                         className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
                         onClick={() => navigate(-1)}

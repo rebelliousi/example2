@@ -169,7 +169,7 @@ const DegreeInformationForm = () => {
               </div>
             ))}
 
-          <div className="flex justify-end mt-10 space-x-2">
+          <div className="flex justify-end mt-10 space-x-5">
             <button
               className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
               onClick={() => navigate(-1)} // Önceki sayfaya gitme
