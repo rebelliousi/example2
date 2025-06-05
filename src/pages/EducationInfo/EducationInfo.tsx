@@ -323,17 +323,19 @@ const EducationInfo = () => {
           <Link
             to="/infos/guardians-info"
             className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
+           
           >
             Previous
           </Link>
 
-          <Button
+          <Link
+            to="/infos/awards-info"
             type="primary"
             onClick={handleSubmit}
             className="bg-primaryBlue text-white py-2 px-4 rounded"
           >
             Next
-          </Button>
+          </Link>
         </div>
       </Space>
     </div>

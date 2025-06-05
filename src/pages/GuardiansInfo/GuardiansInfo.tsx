@@ -241,7 +241,7 @@ const GuardiansInfo = () => {
 
   };
    
-    navigate("/infos/education-info");
+   
   const renderContactInformation = (
     formData: DegreeInformation,
     handleInputChange: (
