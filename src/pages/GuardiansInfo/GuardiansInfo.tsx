@@ -6,6 +6,8 @@ import type { Moment } from "moment";
 
 import PlusIcon from "../../assets/icons/PlusIcon";
 import TrashIcon from "../../assets/icons/TrashIcon"; // Import TrashIcon
+import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
+
 
 const { Option } = Select;
 
@@ -23,7 +25,7 @@ interface DegreeInformation {
   passport: string | null;
   homePhoneNumber: string | null; // New field
   cellPhoneNumber: string | null; // New field
-  email: string | null; // New field
+  email: string | null;
 }
 
 type DegreeInformationKey = keyof DegreeInformation;
@@ -66,9 +68,7 @@ const GuardiansInfo = () => {
   const [otherGuardianFiles, setOtherGuardianFiles] = useState<File[]>([]);
   const fatherFileInputRef = useRef<HTMLInputElement>(null);
   const motherFileInputRef = useRef<HTMLInputElement>(null);
-  const otherGuardianFileInputRefs = useRef<
-    (HTMLInputElement | null)[]
-  >([]); // Ref for an array of potentially null HTMLElements
+  const otherGuardianFileInputRefs = useRef<(HTMLInputElement | null)[]>([]); // Ref for an array of potentially null HTMLElements
 
   // Initialize otherGuardianFileInputRefs.current to an empty array.
   useEffect(() => {
@@ -119,7 +119,7 @@ const GuardiansInfo = () => {
   const handleOtherGuardianDateChange = (
     index: number,
     date: Moment | null,
-    fieldName: "dateOfBirth" | "dateGiven" | "givenBy"
+    fieldName: "dateOfBirth"
   ) => {
     const newGuardians = [...otherGuardians];
     newGuardians[index] = { ...newGuardians[index], [fieldName]: date };
@@ -143,11 +143,7 @@ const GuardiansInfo = () => {
     setOtherGuardians(newGuardians);
   };
 
- 
-
-  const handleFatherFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFatherFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFatherSelectedFile(file);
@@ -164,9 +160,7 @@ const GuardiansInfo = () => {
     }
   };
 
-  const handleMotherFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleMotherFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setMotherSelectedFile(file);
@@ -253,7 +247,12 @@ const GuardiansInfo = () => {
     handleInputChange: (
       e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
       fieldName: DegreeInformationKey
-    ) => void
+    ) => void,
+    selectedFile: File | null,
+    fileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
+    fileInputRef: React.RefObject<HTMLInputElement | null>, // Allow null here
+    handlePlusClick: () => void,
+    onDelete?: () => void // Added onDelete prop
   ) => (
     <>
       <div className="mb-4 mt-20">
@@ -263,7 +262,7 @@ const GuardiansInfo = () => {
       </div>
       <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
         <label className="w-44 font-[400] text-[14px] self-center">
-          Home phone number
+          Phone number
         </label>
         <Space>
           <Input
@@ -277,7 +276,7 @@ const GuardiansInfo = () => {
 
       <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
         <label className="w-44 font-[400] text-[14px] self-center">
-          Cellphone number
+          Work place
         </label>
         <Space>
           <Input
@@ -289,16 +288,67 @@ const GuardiansInfo = () => {
         </Space>
       </div>
 
+      <div className="flex  sm:flex-row items-start gap-4 mb-4">
+        <label className="w-44 font-[400] text-[14px] self-center">
+          Passport
+        </label>
+        <div className=" flex w-[400px]">
+          <Space>
+            <div className="flex items-center justify-between  w-[400px]">
+              {" "}
+              {/* Changed from justify-center to justify-between */}
+              <Button
+                onClick={handlePlusClick}
+                type="text"
+                className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
+              >
+                {selectedFile ? selectedFile.name : "Attach passport copy"}
+                <PlusIcon />
+              </Button>
+              <input
+                type="file"
+                style={{ display: "none" }}
+                onChange={fileInputChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </Space>
+
+          <div className="flex items-center ml-4">
+            <InfoCircleIcon className="text-blue-500 hover:text-blue-700 mr-5" />
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                className="px-8 py-2 flex items-center justify-center gap-2 border-[#FA896B] border text-[#FA896B] rounded hover:text-[#FA896B] hover:border-[#FA896B] w-[200px]" /* veya w-[200px] gibi sabit bir değer */
+              >
+               Delete guardian
+          <TrashIcon className="w-4"/>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderAddressInformation = (
+    formData: DegreeInformation,
+    handleInputChange: (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+      fieldName: DegreeInformationKey
+    ) => void
+  ) => (
+    <>
       <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
         <label className="w-44 font-[400] text-[14px] self-center">
-          E-mail
+          Address
         </label>
         <Space>
           <Input
-            placeholder="Enter Email"
+            placeholder="Enter Address"
             className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-            value={formData.email || ""}
-            onChange={(e) => handleInputChange(e, "email")}
+            value={formData.address || ""}
+            onChange={(e) => handleInputChange(e, "address")}
           />
         </Space>
       </div>
@@ -317,12 +367,13 @@ const GuardiansInfo = () => {
       fieldName: "dateOfBirth" | "dateGiven" | "givenBy"
     ) => void,
     handleDeceasedChange: (value: boolean | null) => void,
-  
+
     selectedFile: File | null,
     fileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
     fileInputRef: React.RefObject<HTMLInputElement | null>, // Allow null here
     handlePlusClick: () => void,
-    onDelete?: () => void
+    onDelete?: () => void,
+    isOtherGuardian?: boolean
   ) => {
     return (
       <div className="mb-14 col-span-6">
@@ -330,15 +381,15 @@ const GuardiansInfo = () => {
           <h1 className="text-headerBlue text-[14px] font-[500]">
             {formTitle}
           </h1>
-          {onDelete && (
-            <Button
-              type="text"
-              onClick={onDelete}
-              className="text-red-500 hover:text-red-700 flex items-center gap-2"
-            >
-              <TrashIcon /> Delete Guardian
-            </Button>
-          )}
+          {/*{onDelete && (*/}
+          {/*  <Button*/}
+          {/*    type="text"*/}
+          {/*    onClick={onDelete}*/}
+          {/*    className="text-red-500 hover:text-red-700 flex items-center gap-2"*/}
+          {/*  >*/}
+          {/*    <TrashIcon /> Delete Guardian*/}
+          {/*  </Button>*/}
+          {/*)}*/}
         </div>
 
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
@@ -410,75 +461,71 @@ const GuardiansInfo = () => {
           </Space>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-          <label className="w-44 font-[400] text-[14px] self-center">
-            Merhum?
-          </label>
-          <Space>
-            <Select
-              placeholder="Select"
-              className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
-              value={
-                formData.isDeceased === null
-                  ? undefined
-                  : formData.isDeceased
-              }
-              onChange={handleDeceasedChange}
-              allowClear
-            >
-              <Option value={true}>Yes</Option>
-              <Option value={false}>No</Option>
-            </Select>
-          </Space>
-        </div>
-
-        {formData.isDeceased === false && (
+        {!isOtherGuardian && (
           <>
             <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
               <label className="w-44 font-[400] text-[14px] self-center">
-                Address
+                Dead?
               </label>
               <Space>
-                <Input
-                  placeholder="Enter Address"
-                  className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                  value={formData.address || ""}
-                  onChange={(e) => handleInputChange(e, "address")}
-                />
+                <Select
+                  placeholder="Select"
+                  className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
+                  value={
+                    formData.isDeceased === null
+                      ? undefined
+                      : formData.isDeceased
+                  }
+                  onChange={handleDeceasedChange}
+                  allowClear
+                >
+                  <Option value={true}>Yes</Option>
+                  <Option value={false}>No</Option>
+                </Select>
               </Space>
             </div>
-            {renderContactInformation(formData, handleInputChange)}
+
+            {formData.isDeceased === false && (
+              <>
+                {renderAddressInformation(formData, handleInputChange)}
+                {renderContactInformation(
+                  formData,
+                  handleInputChange,
+                  selectedFile,
+                  fileInputChange,
+                  fileInputRef,
+                  handlePlusClick
+                )}
+              </>
+            )}
+
+            {formData.isDeceased === true && (
+              <>
+                {renderContactInformation(
+                  formData,
+                  handleInputChange,
+                  selectedFile,
+                  fileInputChange,
+                  fileInputRef,
+                  handlePlusClick
+                )}
+              </>
+            )}
           </>
         )}
 
-        {formData.isDeceased === true && (
+        {isOtherGuardian && (
           <>
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                Passport
-              </label>
-              <Space>
-                <div className="flex items-center justify-center space-x-2">
-                  <Button
-                    onClick={handlePlusClick}
-                    type="text"
-                    className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
-                  >
-                    {selectedFile
-                      ? selectedFile.name
-                      : "Attach passport copy"}
-                    <PlusIcon />
-                  </Button>
-
-                  <input
-                    type="file"
-                    style={{ display: "none" }}
-                    onChange={fileInputChange}
-                    ref={fileInputRef}
-                  />
-                </div>
-              </Space>
-            </div>
+            {renderAddressInformation(formData, handleInputChange)}
+            {renderContactInformation(
+              formData,
+              handleInputChange,
+              selectedFile,
+              fileInputChange,
+              fileInputRef,
+              handlePlusClick,
+              onDelete
+            )}
           </>
         )}
       </div>
@@ -495,11 +542,13 @@ const GuardiansInfo = () => {
             handleFatherInputChange,
             handleFatherDateChange,
             handleFatherDeceasedChange,
-          
+
             fatherSelectedFile,
             handleFatherFileChange,
             fatherFileInputRef,
-            handleFatherPlusClick
+            handleFatherPlusClick,
+            undefined,
+            false
           )}
 
           {renderGuardianForm(
@@ -508,11 +557,13 @@ const GuardiansInfo = () => {
             handleMotherInputChange,
             handleMotherDateChange,
             handleMotherDeceasedChange,
-        
+
             motherSelectedFile,
             handleMotherFileChange,
             motherFileInputRef,
-            handleMotherPlusClick
+            handleMotherPlusClick,
+            undefined,
+            false
           )}
         </div>
 
@@ -528,19 +579,19 @@ const GuardiansInfo = () => {
                 (date, fieldName) =>
                   handleOtherGuardianDateChange(index, date, fieldName),
                 (value) => handleOtherGuardianDeceasedChange(index, value),
-            
+
                 otherGuardianFiles[index] || null,
                 (e) => handleOtherGuardianFileChange(index, e),
                 (el) => {
-                 
                   if (el && otherGuardianFileInputRefs.current) {
                     otherGuardianFileInputRefs.current[index] = el;
                   } else if (!otherGuardianFileInputRefs.current) {
-                    otherGuardianFileInputRefs.current = []; 
+                    otherGuardianFileInputRefs.current = [];
                   }
                 },
                 () => handleOtherGuardianPlusClick(index),
-                () => handleDeleteGuardian(index)
+                () => handleDeleteGuardian(index),
+                true
               )}
             </div>
           ))}
