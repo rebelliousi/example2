@@ -16,7 +16,7 @@ const InstructionPage: React.FC = () => {
             if (!isLoggedIn) {
                 navigate('/login');
             } else {
-                navigate('/infos/');
+                navigate('/infos/degree-information');
             }
         } else {
             alert('Please agree to the terms before starting.');

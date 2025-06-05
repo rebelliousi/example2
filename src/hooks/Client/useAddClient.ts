@@ -70,7 +70,7 @@ export interface ClientUser {
 }
 
 export interface IClient {
-  degree?: 'BACHELOR' | 'MASTER' | 'PHD'; // API'de görüldüğü için ekledim
+  degree?: 'BACHELOR' | 'MASTER' ; // API'de görüldüğü için ekledim
   primary_major: number;
   admission_major: number[];
   user: ClientUser;
