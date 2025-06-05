@@ -1,9 +1,9 @@
 import { Select, Space, message } from "antd";
-import Container from "../../components/Container/Container";
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdmissionMajor } from "../../hooks/AdmissionMajor/useAdmissionMajor";
 import { useAddClient } from "../../hooks/Client/useAddClient";
+import { Link, useNavigate } from 'react-router-dom'; // useNavigate ekledik
 
 const { Option } = Select;
 
@@ -49,6 +49,8 @@ const DegreeInformationForm = () => {
     setAdditionalMajors(newMajors);
   };
 
+  const navigate = useNavigate(); // useNavigate'i tanımladık
+
   const handleSubmit = () => {
     if (!degreeType || !primaryMajor) {
       message.error("Please select Degree Type and Primary Major.");
@@ -65,12 +67,22 @@ const DegreeInformationForm = () => {
 
     console.log("Degree Information:", degreeInformation);
 
-    message.success("Degree information saved. Proceed to the next page.");
+    message.success("Degree information saved. Proceeding to the next page.");
 
     setDegreeType(null);
     setPrimaryMajor(null);
     setAdditionalMajors(Array(3).fill(null));
+
+    navigate('/infos/general-information'); // Yönlendirme burada
   };
+
+  // State for displaying additional major selects
+  const [showAdditionalMajors, setShowAdditionalMajors] = useState(false);
+
+  // Update showAdditionalMajors when degreeType changes
+  useEffect(() => {
+    setShowAdditionalMajors(degreeType === DegreeType.BACHELOR);
+  }, [degreeType]);
 
   return (
     
@@ -87,9 +99,9 @@ const DegreeInformationForm = () => {
             <Space>
               <Select
                 placeholder="Select Degree Type"
-                className="w-[400px] h-[40px] border-[#DFE5EF] rounded-lg"
+                className="w-[400px]  h-[40px] border-[#DFE5EF] rounded-lg"
                 value={degreeType}
-                onChange={(value) => setDegreeType(value)}
+                onChange={(value) => setDegreeType(value as DegreeTypeValue)} // Type assertion here
               >
                 {degreeOptions.map((degree) => (
                   <Option key={degree.value} value={degree.value}>
@@ -122,55 +134,57 @@ const DegreeInformationForm = () => {
             </Space>
           </div>
 
-          {[0, 1, 2].map((index) => (
-            <div
-              key={index}
-              className="flex flex-col sm:flex-row sm:items-center gap-4"
-            >
-              <label className="w-32 font-[400] text-[14px]">
-                Major {index + 2}
-              </label>
-              <Space>
-                <Select
-                  placeholder={`Select Major ${index + 2}`}
-                  className="rounded-lg w-[400px] h-[40px] border-[#DFE5EF]"
-                  value={additionalMajors[index]}
-                  onChange={(value) =>
-                    handleAdditionalMajorChange(index, value)
-                  }
-                  loading={isMajorLoading}
-                  disabled={isMajorLoading}
-                  allowClear
-                >
-                  {majorOptions.map((major) => (
-                    <Option key={major.id} value={major.id}>
-                      {major.major}
-                    </Option>
-                  ))}
-                </Select>
-                {index === 0 && (
-                  <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
-                )}
-              </Space>
-            </div>
-          ))}
+          {/* Conditional rendering of additional major selects */}
+          {showAdditionalMajors &&
+            [0, 1, 2].map((index) => (
+              <div
+                key={index}
+                className="flex flex-col sm:flex-row sm:items-center gap-4"
+              >
+                <label className="w-32 font-[400] text-[14px]">
+                  Major {index + 2}
+                </label>
+                <Space>
+                  <Select
+                    placeholder={`Select Major ${index + 2}`}
+                    className="rounded-lg w-[400px] h-[40px] border-[#DFE5EF]"
+                    value={additionalMajors[index]}
+                    onChange={(value) =>
+                      handleAdditionalMajorChange(index, value)
+                    }
+                    loading={isMajorLoading}
+                    disabled={isMajorLoading}
+                    allowClear
+                  >
+                    {majorOptions.map((major) => (
+                      <Option key={major.id} value={major.id}>
+                        {major.major}
+                      </Option>
+                    ))}
+                  </Select>
+                  {index === 0 && (
+                    <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
+                  )}
+                </Space>
+              </div>
+            ))}
 
           <div className="flex justify-end mt-10 space-x-2">
-               <button
+            <button
               className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
-              onClick={handleSubmit}
+              onClick={() => navigate(-1)} // Önceki sayfaya gitme
               disabled={isAddingClient}
             >
               Previous
             </button>
-            
-            <button
+
+            <Link to='/infos/general-information'
               className="bg-primaryBlue  text-white  py-2 px-4 rounded"
               onClick={handleSubmit}
-              disabled={isAddingClient}
+            
             >
               Next
-            </button>
+            </Link>
           </div>
         </Space>
       </div>
@@ -179,4 +193,3 @@ const DegreeInformationForm = () => {
 };
 
 export default DegreeInformationForm;
-

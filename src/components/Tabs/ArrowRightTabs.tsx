@@ -42,9 +42,9 @@ const ArrowRightTabs: React.FC<TabProps> = ({ tabs, disabled }) => {
                         <NavLink
                             to={tab.link}
                             className={({ isActive }: { isActive: boolean }) =>
-                                `flex items-center gap-2 p-1 pr-2 ${
+                                `flex items-center gap-2 p-2 pr-2 ${
                                     isActive
-                                        ? 'text-primaryBlue border-b border-primaryBlue'
+                                        ? 'text-primaryBlue border-b  border-primaryBlue'
                                         : 'hover:text-primaryBlue'
                                 }`
                             }

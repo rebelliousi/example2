@@ -99,7 +99,7 @@ import Layout from './pages/Layout/Layout';
 import RequiredDocuments from './pages/RequiredDocuments/RequiredDocuments';
 import SnackbarProvider from './components/Snackbar/SnackBarProvider';
 import LoginPage from './pages/Login/LoginPage';
-import DegreeInformation from './pages/DegreeInformation.tsx/BachelorDegreeInformation';
+import DegreeInformation from './pages/DegreeInformation.tsx/DegreeInformation';
 import InstructionPage from './pages/InstructionPage.tsx/InstructionPage';
 
 function App() {

@@ -24,23 +24,23 @@ const InfoLayout: React.FC = () => {
     },
     {
       id: 3,
-      name: 'Parents',
-      link: `/infos/general-information`,
+      name: 'Guardians',
+      link: `/infos/guardians-info`,
     },
     {
       id: 4,
       name: 'Education',
-      link: `/infos/general-information`,
+      link: `/infos/education-info`,
     },
     {
       id: 5,
       name: 'Awards',
-      link: `/infos/general-information`,
+      link: `/infos/awards-info`,
     },
     {
       id: 6,
       name: 'Other Documents',
-      link: `/infos/general-information`,
+      link: `/infos/other-doc-info`,
     },
   ];
 
