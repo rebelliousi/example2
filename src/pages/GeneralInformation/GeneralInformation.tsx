@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useArea } from "../../hooks/Area/useAreas";
 import type { RadioChangeEvent } from "antd";
-import moment from 'moment';
 import type { Moment } from 'moment';
 import PlusIcon from "../../assets/icons/PlusIcon";
 

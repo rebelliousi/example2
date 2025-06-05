@@ -22,7 +22,9 @@ export default {
                 listItemHover: '#F8FAFC',
                 actionButtonHover: '#EAEFF4',
                 listBackground: '#F8FAFC',
-                headerBlue:'#4570EA'
+                headerBlue:'#4570EA',
+                bgFile:'#F8FAFC',
+                hoverBgFile:'#C8D7F1'
             },
             container: {
                 center: true,

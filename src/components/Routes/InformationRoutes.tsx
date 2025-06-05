@@ -7,6 +7,8 @@ import ClientListPage from '../../pages/Client/ClientListPage';
 import GeneralInformation from '../../pages/GeneralInformation/GeneralInformation';
 import GuardiansInfoPage from '../../pages/GuardiansInfo/GuardiansInfo';
 import EducationInfo from '../../pages/EducationInfo/EducationInfo';
+import AwardsInfo from '../../pages/AwardsInfo/AwardsInfo';
+import OtherDocuments from '../../pages/OtherDocuments/OtherDocuments';
 
 
 const InformationRoutes = () => {
@@ -19,6 +21,9 @@ const InformationRoutes = () => {
            <Route path="general-information" element={<GeneralInformation />} />
            <Route path='guardians-info' element={<GuardiansInfoPage/>}/>
             <Route path='education-info' element={<EducationInfo/>}/>
+             <Route path='awards-info' element={<AwardsInfo/>}/>
+               <Route path='other-doc-info' element={<OtherDocuments/>}/>
+            
         </Route>
       </Routes>
     </Suspense>

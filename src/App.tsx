@@ -5,6 +5,7 @@ import SnackbarProvider from './components/Snackbar/SnackBarProvider';
 import LoginPage from './pages/Login/LoginPage';
 import InstructionPage from './pages/InstructionPage.tsx/InstructionPage';
 import InformationRoutes from './components/Routes/InformationRoutes';
+import ApplicationStatusPage from './pages/ApplicationStatus/ApplicationStatusPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route index element={<RequiredDocuments />} /> {/* Ana sayfa */}
           <Route path="required_documents" element={<RequiredDocuments />} />
           <Route path="instruction_page" element={<InstructionPage />} />
+          <Route path='application-status' element={<ApplicationStatusPage/>}/>
               </Route>
           <Route path="login" element={<LoginPage />} />
       

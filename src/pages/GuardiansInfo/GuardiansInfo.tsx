@@ -223,15 +223,14 @@ const GuardiansInfo = () => {
 
   const handleDeleteGuardian = (index: number) => {
     const newGuardians = [...otherGuardians];
-    newGuardians.splice(index, 1); // Remove the guardian at the specified index
+    newGuardians.splice(index, 1); 
     setOtherGuardians(newGuardians);
 
     const newFiles = [...otherGuardianFiles];
     newFiles.splice(index, 1);
     setOtherGuardianFiles(newFiles);
 
-    // Also, you may need to adjust otherGuardianFileInputRefs if needed.
-    // This depends on how you're using those refs.
+   
   };
 
   const handleSubmit = async () => {
@@ -250,9 +249,9 @@ const GuardiansInfo = () => {
     ) => void,
     selectedFile: File | null,
     fileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
-    fileInputRef: React.RefObject<HTMLInputElement | null>, // Allow null here
+    fileInputRef: React.RefObject<HTMLInputElement | null>, 
     handlePlusClick: () => void,
-    onDelete?: () => void // Added onDelete prop
+    onDelete?: () => void
   ) => (
     <>
       <div className="mb-4 mt-20">
@@ -296,7 +295,7 @@ const GuardiansInfo = () => {
           <Space>
             <div className="flex items-center justify-between  w-[400px]">
               {" "}
-              {/* Changed from justify-center to justify-between */}
+             
               <Button
                 onClick={handlePlusClick}
                 type="text"
@@ -381,15 +380,7 @@ const GuardiansInfo = () => {
           <h1 className="text-headerBlue text-[14px] font-[500]">
             {formTitle}
           </h1>
-          {/*{onDelete && (*/}
-          {/*  <Button*/}
-          {/*    type="text"*/}
-          {/*    onClick={onDelete}*/}
-          {/*    className="text-red-500 hover:text-red-700 flex items-center gap-2"*/}
-          {/*  >*/}
-          {/*    <TrashIcon /> Delete Guardian*/}
-          {/*  </Button>*/}
-          {/*)}*/}
+        
         </div>
 
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
