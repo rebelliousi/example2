@@ -1,345 +1,344 @@
-import { Input, Space, message, Select, Button, DatePicker } from "antd";
-import { useState, useRef, useEffect } from "react"; // Import useEffect
+import { Input, Space, Button, DatePicker, message } from "antd";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useArea } from "../../hooks/Area/useAreas";
 import type { Moment } from "moment";
 import PlusIcon from "../../assets/icons/PlusIcon";
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
 import TrashIcon from "../../assets/icons/TrashIcon";
+import moment from 'moment'; // moment'i import et
+import { useSendFiles } from '../../hooks/Client/useSendFIles'; // Hook'un doğru konumunu belirtin
 
-const { Option } = Select;
+// const { Option } = Select; // REMOVE THIS LINE - Select is no longer used!
 
-interface DegreeInformation {
-  graduatedSchool: string | null;
-  graduatedYear: Moment | null;
-  region: number | null;
-  district: string | null;
-  certificateOfGraduation: File | null;
+interface EducationInformation {
+    name: string;
+    school_gpa: number;
+    graduated_year: number;
+    files: string[]; // Assuming file IDs from backend
+    filePaths: string[]; // Assuming file paths from backend
 }
 
-type DegreeInformationKey = keyof DegreeInformation;
+type EducationInformationKey = keyof EducationInformation;
+
 
 const EducationInfo = () => {
-  const { data: areaData, isLoading: isAreaLoading } = useArea();
-  const areaOptions = areaData?.results || [];
-  const navigate = useNavigate();
+    const { data: areaData, isLoading: isAreaLoading } = useArea();
+    const areaOptions = areaData?.results || [];
+    const navigate = useNavigate();
 
-  const [educationInfos, setEducationInfos] = useState<DegreeInformation[]>([
-    {
-      graduatedSchool: null,
-      graduatedYear: null,
-      region: null,
-      district: null,
-      certificateOfGraduation: null,
-    },
-  ]);
-
-  const [selectedFiles, setSelectedFiles] = useState<(File | null)[]>([]);
-  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // Initialize fileInputRefs array with nulls based on the number of education infos
-  useEffect(() => {
-    fileInputRefs.current = Array(educationInfos.length).fill(null);
-  }, [educationInfos.length]);
-
-  const handleInputChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    fieldName: DegreeInformationKey
-  ) => {
-    const newEducationInfos = [...educationInfos];
-    newEducationInfos[index] = {
-      ...newEducationInfos[index],
-      [fieldName]: e.target.value,
-    };
-    setEducationInfos(newEducationInfos);
-  };
-
-  const handleRegionChange = (index: number, value: number | null) => {
-    const newEducationInfos = [...educationInfos];
-    newEducationInfos[index] = { ...newEducationInfos[index], region: value };
-    setEducationInfos(newEducationInfos);
-  };
-
-  const handleGraduatedYearChange = (index: number, date: Moment | null) => {
-    const newEducationInfos = [...educationInfos];
-    newEducationInfos[index] = {
-      ...newEducationInfos[index],
-      graduatedYear: date,
-    };
-    setEducationInfos(newEducationInfos);
-  };
-
-  const handleFileChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0] || null;
-
-    setSelectedFiles(prevSelectedFiles => {
-      const newSelectedFiles = [...prevSelectedFiles];
-      newSelectedFiles[index] = file;
-      return newSelectedFiles;
-    });
-
-    const newEducationInfos = [...educationInfos];
-    newEducationInfos[index] = {
-      ...newEducationInfos[index],
-      certificateOfGraduation: file,
-    };
-    setEducationInfos(newEducationInfos);
-  };
-
-  const handlePlusClick = (index: number) => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]!.click();
-    }
-  };
-
-  const handleAddEducationInfo = () => {
-    setEducationInfos(prevEducationInfos => [
-      ...prevEducationInfos,
-      {
-        graduatedSchool: null,
-        graduatedYear: null,
-        region: null,
-        district: null,
-        certificateOfGraduation: null,
-      },
+    const [educationInfos, setEducationInfos] = useState<EducationInformation[]>([
+        {
+            name: '',
+            school_gpa: 0,
+            graduated_year: 0,
+            files: [],
+            filePaths: [],
+        },
     ]);
 
-    setSelectedFiles(prevSelectedFiles => [...prevSelectedFiles, null]);
-  };
+    const [selectedFiles, setSelectedFiles] = useState<(File | null)[]>([]);
+    const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    useEffect(() => {
+        fileInputRefs.current = Array(educationInfos.length).fill(null);
+    }, [educationInfos.length]);
+
+    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles(); // useSendFiles hook'unu ekleyin
+
+    const handleInputChange = (
+        index: number,
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+        fieldName: EducationInformationKey
+    ) => {
+        const newEducationInfos = [...educationInfos];
+        newEducationInfos[index] = {
+            ...newEducationInfos[index],
+            [fieldName]: fieldName === 'school_gpa' ? parseFloat(e.target.value) : e.target.value as any, // Type assertion for dynamic keys
+        };
+        setEducationInfos(newEducationInfos);
+    };
+
+    const handleNameChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        handleInputChange(index, e, "name");
+    };
+
+    const handleSchoolGpaChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        handleInputChange(index, e, "school_gpa");
+    };
+
+    const handleGraduatedYearChange = (index: number, date: Moment | null) => {
+        const newEducationInfos = [...educationInfos];
+        newEducationInfos[index] = {
+            ...newEducationInfos[index],
+            graduated_year: date ? date.year() : 0, // Extract the year
+        };
+        setEducationInfos(newEducationInfos);
+    };
+
+
+    const deleteFile = (index: number) => {
+        setSelectedFiles((prevSelectedFiles) => {
+            const newSelectedFiles = [...prevSelectedFiles];
+            newSelectedFiles[index] = null; // Dosyayı listeden kaldır
+            return newSelectedFiles;
+        });
+
+        setEducationInfos((prevEducationInfos) => {
+            const newEducationInfos = [...prevEducationInfos];
+            newEducationInfos[index] = {
+                ...newEducationInfos[index],
+                files: [], // Sertifika listesini temizle - Changed to 'files'
+                filePaths: [], // Dosya yolu listesini temizle
+            };
+            return newEducationInfos;
+        });
+
+        message.success('File deleted successfully');
+    };
+
+    const handleFileChange = async (
+        index: number,
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0] || null;
+
+        setSelectedFiles((prevSelectedFiles) => {
+            const newSelectedFiles = [...prevSelectedFiles];
+            newSelectedFiles[index] = file;
+            return newSelectedFiles;
+        });
+
+        if (file) {
+            const formData = new FormData();
+            formData.append('path', file); // 'path' yerine sunucunuzun beklediği alanı kullanın
+
+            uploadFile(formData, {
+                onSuccess: (data: any) => {
+                    // Dosya başarıyla yüklendi, sunucudan dönen URL veya ID'yi kullanın
+                    const newEducationInfos = [...educationInfos];
+                    newEducationInfos[index] = {
+                        ...newEducationInfos[index],
+                        files: [...newEducationInfos[index].files, data.id], // Veya sunucudan dönen URL'yi kullanın: data.path - Changed to 'files' and assumed data.id is the file ID
+                        filePaths: [...newEducationInfos[index].filePaths, data.path],
+                    };
+                    setEducationInfos(newEducationInfos);
+                    message.success('File uploaded successfully');
+                },
+                onError: (error: any) => {
+                    console.error('File upload failed', error);
+                    message.error('File upload failed');
+                },
+            });
+        }
+    };
+
+    const handlePlusClick = (index: number) => {
+        if (fileInputRefs.current[index]) {
+            fileInputRefs.current[index]!.click();
+        }
+    };
+
+    const handleAddEducationInfo = () => {
+        setEducationInfos((prevEducationInfos) => [
+            ...prevEducationInfos,
+            {
+                name: '',
+                school_gpa: 0,
+                graduated_year: 0,
+                files: [],
+                filePaths: [],
+            },
+        ]);
+
+        setSelectedFiles((prevSelectedFiles) => [...prevSelectedFiles, null]);
+    };
 
     const handleDeleteEducationInfo = (index: number) => {
-        setEducationInfos(prevEducationInfos => {
+        setEducationInfos((prevEducationInfos) => {
             const newEducationInfos = [...prevEducationInfos];
             newEducationInfos.splice(index, 1);
             return newEducationInfos;
         });
 
-        setSelectedFiles(prevSelectedFiles => {
+        setSelectedFiles((prevSelectedFiles) => {
             const newSelectedFiles = [...prevSelectedFiles];
             newSelectedFiles.splice(index, 1);
             return newSelectedFiles;
         });
 
-        // Update fileInputRefs after deleting an education info
         fileInputRefs.current = fileInputRefs.current.filter((_, i) => i !== index);
-
     };
 
+    const handleSubmit = () => {
+        // Validation before saving to sessionStorage
+        const hasEmptyName = educationInfos.some(info => !info.name);
 
-  const handleSubmit = async () => {
-    console.log("Form Data:", educationInfos);
-    console.log("Selected Files:", selectedFiles);
-
-    const formDataToSend = new FormData();
-
-    educationInfos.forEach((educationInfo, index) => {
-      for (const key in educationInfo) {
-        if (educationInfo.hasOwnProperty(key)) {
-          const typedKey = key as DegreeInformationKey;
-          let value: any = educationInfo[typedKey];
-
-          if (typedKey === "graduatedYear") {
-            value = educationInfo[typedKey]
-              ? (educationInfo[typedKey] as Moment).format("YYYY-MM-DD")
-              : "";
-          }
-
-          if (typedKey !== "certificateOfGraduation") {
-            formDataToSend.append(
-              `educationInfos[${index}][${key}]`,
-              value === null ? "" : String(value)
-            );
-          }
+        if (hasEmptyName) {
+            message.error("Please enter a school name for all entries.");
+            return; // Stop submission
         }
-      }
 
-      // Check if the selected file exists before appending to the FormData
-      if (selectedFiles[index]) {
-        formDataToSend.append(
-          `educationInfos[${index}][certificateOfGraduation]`,
-          selectedFiles[index]! // Non-null assertion because of the check above
-        );
-      }
-    });
+        // sessionStorage'a kaydet
+        sessionStorage.setItem('educationInformation', JSON.stringify(educationInfos));
+        navigate("/infos/awards-info");
+    };
 
-    try {
-      const response = await fetch("/api/save-education-info", {
-        method: "POST",
-        body: formDataToSend,
-      });
+    const setFileInputRef = (index: number, el: HTMLInputElement | null) => {
+        fileInputRefs.current[index] = el;
+    };
 
-      if (response.ok) {
-        message.success("Education information saved successfully!");
-        navigate("/infos/award-info");
-      } else {
-        const errorData = await response.json();
-        console.error("Server error:", errorData);
-        message.error(
-          `Error saving education information. Server responded with: ${response.statusText} - ${JSON.stringify(errorData)}`
-        );
-      }
-    } catch (error) {
-      console.error("Error saving education information:", error);
-      message.error("Network error during save.");
-    }
-  };
+    useEffect(() => {
+        const storedEducationInfos = sessionStorage.getItem('educationInformation');
+        if (storedEducationInfos) {
+            const parsedData = JSON.parse(storedEducationInfos);
 
-  return (
-    <div className="pt-10 px-4 pb-10">
-      <Space direction="vertical" size="middle" className="w-full">
-        {/* General Information */}
-        {educationInfos.map((educationInfo, index) => (
-          <div key={index} className="mb-14">
-            <div className="mb-4">
-              <h1 className="text-headerBlue text-[14px] font-[500]">
-                {index === 0
-                  ? "School Graduation Information"
-                  : "Other Graduation Information"}
-              </h1>
-            </div>
+            // Tarih dönüştürme işlemini kaldır veya sadece yılı al
+            const educationInfosWithYear = parsedData.map((educationInfo: any) => ({
+                ...educationInfo,
+                graduated_year: educationInfo.graduated_year ? parseInt(educationInfo.graduated_year, 10) : 0,
+            }));
+            setEducationInfos(educationInfosWithYear);
+        }
+    }, []);
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                Graduated school
-              </label>
-              <Space>
-                <Input
-                  placeholder="Enter Graduated School"
-                  className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                  value={educationInfo.graduatedSchool || ""}
-                  onChange={(e) =>
-                    handleInputChange(index, e, "graduatedSchool")
-                  }
-                />
-              </Space>
-            </div>
+    return (
+        <div className="pt-10 px-4 pb-10">
+            <Space direction="vertical" size="middle" className="w-full">
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                Graduated year
-              </label>
-              <Space>
-                <DatePicker
-                  picker="year"
-                  className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
-                  value={educationInfo.graduatedYear}
-                  onChange={(date) => handleGraduatedYearChange(index, date)}
-                  placeholder="Select Year"
-                />
-              </Space>
-            </div>
+                {educationInfos.map((educationInfo, index) => (
+                    <div key={index} className="mb-14">
+                        <div className="mb-4">
+                            <h1 className="text-headerBlue text-[14px] font-[500]">
+                                {index === 0
+                                    ? "School Graduation Information"
+                                    : "Other Graduation Information"}
+                            </h1>
+                        </div>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                Region
-              </label>
-              <Space>
-                <Select
-                  placeholder="Select Region"
-                  className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
-                  value={educationInfo.region || undefined}
-                  onChange={(value) => handleRegionChange(index, value)}
-                  loading={isAreaLoading}
-                  allowClear
+                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                            <label className="w-44 font-[400] text-[14px] self-center">
+                                School Name
+                            </label>
+                            <Space>
+                                <Input
+                                    placeholder="Enter School Name"
+                                    className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
+                                    value={educationInfo.name || ""}
+                                    onChange={(e) => handleNameChange(index, e)}
+                                />
+                            </Space>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                            <label className="w-44 font-[400] text-[14px] self-center">
+                                School GPA
+                            </label>
+                            <Space>
+                                <Input
+                                    type="number"
+                                    placeholder="Enter School GPA"
+                                    className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
+                                    value={educationInfo.school_gpa?.toString() || ""}
+                                    onChange={(e) => handleSchoolGpaChange(index, e)}
+                                />
+                            </Space>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                            <label className="w-44 font-[400] text-[14px] self-center">
+                                Graduated year
+                            </label>
+                            <Space>
+                                <DatePicker
+                                    picker="year"
+                                    className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
+                                    value={educationInfo.graduated_year ? moment(educationInfo.graduated_year.toString(), 'YYYY') : null}
+                                    onChange={(date) => handleGraduatedYearChange(index, date)}
+                                    placeholder="Select Year"
+                                />
+                            </Space>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                            <label className="w-44 font-[400] text-[14px] self-center">
+                                Certificate of graduation
+                            </label>
+                            <Space>
+                                <div className="flex items-center justify-center space-x-2">
+                                     <Button
+                                            onClick={() => {
+                                                if (selectedFiles[index]) {
+                                                    deleteFile(index);
+                                                } else {
+                                                    handlePlusClick(index);
+                                                }
+                                            }}
+                                            type="text"
+                                            className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
+                                        >
+                                            {selectedFiles[index]
+                                                ? selectedFiles[index]!.name
+                                                : "Attach document"}
+                                            {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                        </Button>
+
+                                    <input
+                                        type="file"
+                                        style={{ display: "none" }}
+                                        onChange={(e) => handleFileChange(index, e)}
+                                        ref={(el) => {
+                                            if (el) {
+                                                setFileInputRef(index, el);
+                                            }
+                                        }}
+                                        accept="image/*,application/pdf"
+                                    />
+
+                                    <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
+                                </div>
+                            </Space>
+                        </div>
+                        {index > 0 && (
+                            <button
+                                onClick={() => handleDeleteEducationInfo(index)}
+                                className="px-8 py-2 flex items-center justify-center gap-2 border-[#FA896B] border text-[#FA896B] rounded hover:text-[#FA896B] hover:border-[#FA896B] w-[200px]"
+                            >
+                                Delete info
+                                <TrashIcon className="w-4" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+
+                <button
+                    type="button"
+                    onClick={handleAddEducationInfo}
+                    className="px-8 py-2 flex items-center gap-2 border-blue-500 border text-blue-500 rounded"
                 >
-                  {areaOptions.map((area) => (
-                    <Option key={area.id} value={area.id}>
-                      {area.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Space>
-            </div>
+                    <PlusIcon /> Add
+                </button>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                District
-              </label>
-              <Space>
-                <Input
-                  placeholder="Enter District"
-                  className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                  value={educationInfo.district || ""}
-                  onChange={(e) => handleInputChange(index, e, "district")}
-                />
-              </Space>
-            </div>
+                <div className="flex justify-end mt-12 space-x-5">
+                    <Link
+                        to="/infos/guardians-info"
+                        className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
+                    >
+                        Previous
+                    </Link>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-              <label className="w-44 font-[400] text-[14px] self-center">
-                Certificate of graduation
-              </label>
-              <Space>
-                <div className="flex items-center justify-center space-x-2">
-                  <Button
-                    onClick={() => handlePlusClick(index)}
-                    type="text"
-                    className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
-                  >
-                    {selectedFiles[index]
-                      ? selectedFiles[index]!.name
-                      : "Attach document"}
-                    <PlusIcon />
-                  </Button>
-
-                  <input
-                    type="file"
-                    style={{ display: "none" }}
-                    onChange={(e) => handleFileChange(index, e)}
-                    ref={(el) => (fileInputRefs.current[index] = el)}
-                    accept="image/*,application/pdf"
-                  />
-
-                  <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
+                    <Button
+                        type="primary"
+                        onClick={handleSubmit}
+                        className="bg-primaryBlue text-white py-2 px-4 rounded"
+                    >
+                        Next
+                    </Button>
                 </div>
-              </Space>
-
-            </div>
-            {index > 0 && (  // Conditionally render the delete button
-              <button
-                  onClick={() => handleDeleteEducationInfo(index)} // Add onClick handler
-                className="px-8 py-2 flex items-center justify-center gap-2 border-[#FA896B] border text-[#FA896B] rounded hover:text-[#FA896B] hover:border-[#FA896B] w-[200px]"
-              >
-                Delete info
-                <TrashIcon className="w-4" />
-              </button>
-            )}
-          </div>
-        ))}
-
-        <button
-          type="button"
-          onClick={handleAddEducationInfo}
-          className="px-8 py-2 flex items-center gap-2 border-blue-500 border text-blue-500 rounded"
-        >
-          <PlusIcon /> Add
-        </button>
-
-        <div className="flex justify-end mt-12 space-x-5">
-          <Link
-            to="/infos/guardians-info"
-            className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
-           
-          >
-            Previous
-          </Link>
-
-          <Link
-            to="/infos/awards-info"
-            type="primary"
-            onClick={handleSubmit}
-            className="bg-primaryBlue text-white py-2 px-4 rounded"
-          >
-            Next
-          </Link>
+            </Space>
+            {isFileUploadLoading && <div>File is uploading...</div>} {/* Yükleme göstergesi */}
         </div>
-      </Space>
-    </div>
-  );
+    );
 };
 
 export default EducationInfo;

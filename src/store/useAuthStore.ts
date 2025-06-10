@@ -1,4 +1,3 @@
-// auth/authStore.ts
 import { create } from 'zustand';
 
 interface AuthState {
@@ -8,11 +7,13 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isLoggedIn: false,
-  login: () => set({ isLoggedIn: true }),
+  isLoggedIn: localStorage.getItem('accessToken') ? true : false, // Sayfa yenilendiğinde token varsa girişli say
+  login: () => {
+    set({ isLoggedIn: true });
+  },
   logout: () => {
     set({ isLoggedIn: false });
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   },
 }));

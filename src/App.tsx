@@ -2,7 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import Layout from './pages/Layout/Layout';
 import RequiredDocuments from './pages/RequiredDocuments/RequiredDocuments';
 import SnackbarProvider from './components/Snackbar/SnackBarProvider';
-import LoginPage from './pages/Login/LoginPage';
+import LoginPage from './pages/Registration/RegistrationPage';
 import InstructionPage from './pages/InstructionPage.tsx/InstructionPage';
 import InformationRoutes from './components/Routes/InformationRoutes';
 import ApplicationStatusPage from './pages/ApplicationStatus/ApplicationStatusPage';

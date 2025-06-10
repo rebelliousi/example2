@@ -1,183 +1,115 @@
-import { Input, Space, message, Select, Radio, Button, DatePicker } from "antd";
-import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
-import { useState, useRef } from "react";
+import { Input, Space, Select, Radio, Button, DatePicker, message } from "antd";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useArea } from "../../hooks/Area/useAreas";
 import type { RadioChangeEvent } from "antd";
-import type { Moment } from 'moment';
-import PlusIcon from "../../assets/icons/PlusIcon";
+import type { Moment } from "moment";
+import moment from "moment";
 
 const { Option } = Select;
 
-interface DegreeInformation {
-    firstName: string | null;
-    lastName: string | null;
-    fatherName: string | null;
-    gender: string | null;
-    nationality: string | null;
-    dateOfBirth: Moment | null;
+interface ApplicationUserForm {
+    first_name: string;
+    last_name: string;
+    father_name: string;
     area: number | null;
-    address: string | null;
-    placeOfBirth: string | null;
-    homePhoneNumber: string | null;
-    cellPhoneNumber: string | null;
-    email: string | null;
-    serialNumber: string | null;
-    documentNumber: string | null;
-    dateGiven: Moment | null;
-    givenBy: string | null;
-    passport: string | null;
+    gender: 'male' | 'female' | null;
+    nationality: string;
+    date_of_birth: string;
+    address: string;
+    place_of_birth: string;
+    home_phone: string;
+    phone: string;
+    email: string;
 }
 
-type DegreeInformationKey = keyof DegreeInformation;
+type GeneralInformationKey = keyof ApplicationUserForm;
 
 const GeneralInformationForm = () => {
     const { data: areaData, isLoading: isAreaLoading } = useArea();
     const areaOptions = areaData?.results || [];
     const navigate = useNavigate();
 
-    const [formData, setFormData] = useState<DegreeInformation>({
-        firstName: null,
-        lastName: null,
-        fatherName: null,
-        gender: null,
-        nationality: null,
-        dateOfBirth: null,
+    const [formData, setFormData] = useState<ApplicationUserForm>({
+        first_name: "",
+        last_name: "",
+        father_name: "",
         area: null,
-        address: null,
-        placeOfBirth: null,
-        homePhoneNumber: null,
-        cellPhoneNumber: null,
-        email: null,
-        serialNumber: null,
-        documentNumber: null,
-        dateGiven: null,
-        givenBy: null,
-        passport: null,
+        gender: null,
+        nationality: "",
+        date_of_birth: "",
+        address: "",
+        place_of_birth: "",
+        home_phone: "",
+        phone: "",
+        email: "",
     });
-
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-        fieldName: Exclude<DegreeInformationKey, 'dateOfBirth' | 'dateGiven'>
+        fieldName: Exclude<GeneralInformationKey, "date_of_birth" | "gender">
     ) => {
         setFormData({ ...formData, [fieldName]: e.target.value });
     };
 
-    const handleGivenByChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, givenBy: e.target.value });
-    };
-
     const handleGenderChange = (e: RadioChangeEvent) => {
-        setFormData({ ...formData, gender: e.target.value });
+        setFormData({ ...formData, gender: e.target.value as "male" | "female" });
     };
 
     const handleAreaChange = (value: number | null) => {
         setFormData({ ...formData, area: value });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-
-        if (file) {
-            setSelectedFile(file);
-            setFormData({ ...formData, passport: file.name });
-        } else {
-            setSelectedFile(null);
-            setFormData({ ...formData, passport: null });
-        }
-    };
-
-    const handlePlusClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleDateChange = (date: Moment | null, fieldName: 'dateOfBirth' | 'dateGiven') => {
-        setFormData({ ...formData, [fieldName]: date });
-    };
-
-    const handleSubmit = async () => {
-        console.log("Form Data:", formData);
-        console.log("Selected File:", selectedFile);
-            navigate("/infos/guardians-info");
-
-        const formDataToSend = new FormData();
-
-        for (const key in formData) {
-            if (formData.hasOwnProperty(key)) {
-                const typedKey = key as DegreeInformationKey;
-                let value = formData[typedKey];
-
-                if (typedKey === 'dateOfBirth' || typedKey === 'dateGiven') {
-                    value = formData[typedKey] ? (formData[typedKey] as Moment).format('YYYY-MM-DD') : '';
-                }
-
-                formDataToSend.append(key, value === null ? '' : String(value));
-            }
-        }
-
-        if (selectedFile) {
-            formDataToSend.append('passport', selectedFile);
-
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formDataToSend,
-                });
-
-                if (response.ok) {
-                    message.success("Form saved and passport uploaded successfully!");
-                } else {
-                    message.error("Error uploading passport.");
-                }
-            } catch (error) {
-                console.error("Upload error:", error);
-                message.error("Network error during upload.");
-            }
-        } else {
-            try {
-                const response = await fetch('/api/save-form', {
-                    method: 'POST',
-                    body: formDataToSend,
-                });
-
-                if (response.ok) {
-                    message.success("Form saved (no passport uploaded).");
-                } else {
-                    message.error("Error saving form.");
-                }
-            } catch (error) {
-                console.error("Save form error:", error);
-                message.error("Network error during form save.");
-            }
-
-        }
-
-        setSelectedFile(null);
+    const handleDateChange = (date: Moment | null) => {
         setFormData({
-            firstName: null,
-            lastName: null,
-            fatherName: null,
-            gender: null,
-            nationality: null,
-            dateOfBirth: null,
-            area: null,
-            address: null,
-            placeOfBirth: null,
-            homePhoneNumber: null,
-            cellPhoneNumber: null,
-            email: null,
-            serialNumber: null,
-            documentNumber: null,
-            dateGiven: null,
-            givenBy: null,
-            passport: null,
+            ...formData,
+            date_of_birth: date ? date.format("YYYY-MM-DD") : "",
         });
-
-
     };
+
+    const handleSubmit = () => {
+        let formattedDate = "";
+        if (formData.date_of_birth) {
+            const dateMoment = moment(formData.date_of_birth, "YYYY-MM-DD", true);
+            formattedDate = dateMoment.isValid() ? dateMoment.format("YYYY-MM-DD") : "";
+        }
+
+        // Create a new object for the data to be stored in sessionStorage
+        const formDataToSend = {
+            ...formData,
+            date_of_birth: formattedDate,
+        };
+
+        sessionStorage.setItem(
+            "generalInformation",
+            JSON.stringify(formDataToSend)
+        );
+        sessionStorage.setItem("gender", formData.gender || "");
+        navigate("/infos/guardians-info");
+    };
+
+    useEffect(() => {
+        const storedGeneralInformation = sessionStorage.getItem("generalInformation");
+        if (storedGeneralInformation) {
+            try {
+                const parsedData: ApplicationUserForm = JSON.parse(
+                    storedGeneralInformation
+                );
+
+                // Validate and reformat the date when loading from storage
+                if (parsedData.date_of_birth) {
+                    const dateMoment = moment(parsedData.date_of_birth, "YYYY-MM-DD", true);
+                    parsedData.date_of_birth = dateMoment.isValid()
+                        ? dateMoment.format("YYYY-MM-DD")
+                        : "";
+                }
+
+                setFormData(parsedData);
+            } catch (error) {
+                console.error("Error parsing stored data:", error);
+            }
+        }
+    }, []);
 
     return (
         <div className="pt-10 px-4 pb-10">
@@ -191,45 +123,56 @@ const GeneralInformationForm = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">First name</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            First name
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter First Name"
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                                value={formData.firstName || ""}
-                                onChange={(e) => handleInputChange(e, "firstName")}
+                                value={formData.first_name}
+                                onChange={(e) => handleInputChange(e, "first_name")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Last name</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Last name
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Last Name"
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                                value={formData.lastName || ""}
-                                onChange={(e) => handleInputChange(e, "lastName")}
+                                value={formData.last_name}
+                                onChange={(e) => handleInputChange(e, "last_name")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Father's name</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Father's name
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Father's Name"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.fatherName || ""}
-                                onChange={(e) => handleInputChange(e, "fatherName")}
+                                value={formData.father_name}
+                                onChange={(e) => handleInputChange(e, "father_name")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Gender</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Gender
+                        </label>
                         <Space>
-                            <Radio.Group onChange={handleGenderChange} value={formData.gender}>
+                            <Radio.Group
+                                onChange={handleGenderChange}
+                                value={formData.gender}
+                            >
                                 <Radio value="male">Male</Radio>
                                 <Radio value="female">Female</Radio>
                             </Radio.Group>
@@ -237,30 +180,41 @@ const GeneralInformationForm = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Nationality</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Nationality
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Nationality"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.nationality || ""}
+                                value={formData.nationality}
                                 onChange={(e) => handleInputChange(e, "nationality")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Date of birth</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Date of birth
+                        </label>
                         <Space>
                             <DatePicker
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
-                                value={formData.dateOfBirth}
-                                onChange={(date) => handleDateChange(date, 'dateOfBirth')}
+                                value={
+                                    formData.date_of_birth && moment(formData.date_of_birth, "YYYY-MM-DD", true).isValid()
+                                        ? moment(formData.date_of_birth, "YYYY-MM-DD")
+                                        : null
+                                }
+                                onChange={handleDateChange}
+                                format="YYYY-MM-DD"
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Area</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Area
+                        </label>
                         <Space>
                             <Select
                                 placeholder="Select Area"
@@ -280,25 +234,29 @@ const GeneralInformationForm = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Address</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Address
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Address"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.address || ""}
+                                value={formData.address}
                                 onChange={(e) => handleInputChange(e, "address")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Place of birth</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Place of birth
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Place of Birth"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.placeOfBirth || ""}
-                                onChange={(e) => handleInputChange(e, "placeOfBirth")}
+                                value={formData.place_of_birth}
+                                onChange={(e) => handleInputChange(e, "place_of_birth")}
                             />
                         </Space>
                     </div>
@@ -313,136 +271,63 @@ const GeneralInformationForm = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Home phone number</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Home phone number
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Home Phone Number"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.homePhoneNumber || ""}
-                                onChange={(e) => handleInputChange(e, "homePhoneNumber")}
+                                value={formData.home_phone}
+                                onChange={(e) => handleInputChange(e, "home_phone")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">Cellphone number</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            Cellphone number
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Cell Phone Number"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.cellPhoneNumber || ""}
-                                onChange={(e) => handleInputChange(e, "cellPhoneNumber")}
+                                value={formData.phone}
+                                onChange={(e) => handleInputChange(e, "phone")}
                             />
                         </Space>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                        <label className="w-44 font-[400] text-[14px] self-center">E-mail</label>
+                        <label className="w-44 font-[400] text-[14px] self-center">
+                            E-mail
+                        </label>
                         <Space>
                             <Input
                                 placeholder="Enter Email"
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                                value={formData.email || ""}
+                                value={formData.email}
                                 onChange={(e) => handleInputChange(e, "email")}
                             />
                         </Space>
                     </div>
                 </div>
 
-                {/* Passport Information */}
-                <div className="mb-4">
-                    <h1 className="text-headerBlue text-[14px] font-[500]">
-                        Passport Information
-                    </h1>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                    <label className="w-44 font-[400] text-[14px] self-center">Serial number</label>
-                    <Space>
-                        <Input
-                            placeholder="Enter Serial Number"
-                            className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                            value={formData.serialNumber || ""}
-                            onChange={(e) => handleInputChange(e, "serialNumber")}
-                        />
-                    </Space>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                    <label className="w-44 font-[400] text-[14px] self-center">Document number</label>
-                    <Space>
-                        <Input
-                            placeholder="Enter Document Number"
-                            className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                            value={formData.documentNumber || ""}
-                            onChange={(e) => handleInputChange(e, "documentNumber")}
-                        />
-                    </Space>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                    <label className="w-44 font-[400] text-[14px] self-center">Date given</label>
-                    <Space>
-                        <DatePicker
-                            className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
-                            value={formData.dateGiven}
-                            onChange={(date) => handleDateChange(date, 'dateGiven')}
-                        />
-                    </Space>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                    <label className="w-44 font-[400] text-[14px] self-center">Given by</label>
-                    <Space>
-                        <Input
-                            placeholder="Enter Given By"
-                            className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
-                            value={formData.givenBy || ""}
-                            onChange={handleGivenByChange}
-                        />
-                    </Space>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                    <label className="w-44 font-[400] text-[14px] self-center">Passport</label>
-                    <Space>
-                        <div className="flex items-center justify-center space-x-2">
-                            <Button
-                                onClick={handlePlusClick}
-                                type="text"
-                                className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
-                            >
-                                {selectedFile ? selectedFile.name : "Attach passport copy"}
-                                <PlusIcon />
-                            </Button>
-
-                            <input
-                                type="file"
-                                style={{ display: 'none' }}
-                                onChange={handleFileChange}
-                                ref={fileInputRef}
-                            />
-
-                            <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
-                        </div>
-                    </Space>
-                </div>
-
                 <div className="flex justify-end mt-12 space-x-5">
-                    <Link to='/infos/degree-information'
+                    <Link
+                        to="/infos/degree-information"
                         className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
-                      
                     >
                         Previous
                     </Link>
 
-                    <Link to='/infos/guardians-info'
+                    <Button
                         type="primary"
                         onClick={handleSubmit}
                         className="bg-primaryBlue text-white py-2 px-4 rounded"
                     >
                         Next
-                    </Link>
+                    </Button>
                 </div>
             </Space>
         </div>

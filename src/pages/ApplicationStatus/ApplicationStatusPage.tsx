@@ -99,14 +99,7 @@ const ApplicationStatusPage = () => {
               Previous
             </Link>
 
-            <Link
-              to="/infos/guardians-info"
-              type="primary"
-              onClick={handleSubmit}
-              className="bg-primaryBlue text-white py-2 px-4 rounded"
-            >
-              Next
-            </Link>
+           
           </div>
         </Space>
       </div>

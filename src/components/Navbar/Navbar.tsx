@@ -1,3 +1,4 @@
+// Navbar.tsx
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../../public/img/logo 1.png';
@@ -12,12 +13,12 @@ const Navbar = ({
     const navigate = useNavigate();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { isLoggedIn, logout } = useAuthStore(); // Get isLoggedIn and logout function
+
     const handleLogOut = useCallback(() => {
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('refresh_token');
         logout(); // call logout function from zustand
         navigate('/login', { replace: true });
     }, [navigate, logout]);
+
     const handleClickOutside = useCallback((event: MouseEvent) => {
         if (
             dropdownRef.current &&
@@ -26,16 +27,19 @@ const Navbar = ({
             setProfileModal(false);
         }
     }, []);
+
     useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [handleClickOutside]);
+
     const handleProfileClick = (event: React.MouseEvent) => {
         event.stopPropagation();
         setProfileModal((prev) => !prev);
     };
+
     return (
         <nav className={`fixed top-0 left-0 right-0 z-30 bg-white `}>
             <div className="container mx-auto py-4 flex items-center justify-between">

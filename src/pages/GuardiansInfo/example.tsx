@@ -22,15 +22,15 @@ const GuardianRelation = {
 type GuardianRelationType = typeof GuardianRelation[keyof typeof GuardianRelation];
 const DocumentType = {
     SCHOOL_CERTIFICATE: 'school_certificate',
-    PASSPORT: 'passport',
+    PASSPORT = 'passport',
     MILITARY_DOCUMENT: 'military_document',
-    INFORMATION: 'information',
-    RELATIONSHIP_TREE: 'relationship_tree',
-    MEDICAL_RECORD: 'medical_record',
-    DESCRIPTION: 'description',
-    TERJIIMEHAL: 'terjiimehal',
-    LABOR_BOOK: 'labor_book',
-    DUSHUNDIRISH: 'Dushundirish',
+    INFORMATION = 'information',
+    RELATIONSHIP_TREE = 'relationship_tree',
+    MEDICAL_RECORD = 'medical_record',
+    DESCRIPTION = 'description',
+    TERJIIMEHAL = 'terjiimehal',
+    LABOR_BOOK = 'labor_book',
+    DUSHUNDIRISH = 'Dushundirish',
 } as const;
 type DocumentTypeType = typeof DocumentType[keyof typeof DocumentType];
 
@@ -252,8 +252,21 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
     };
 
     const handleSubmit = () => {
+        // Store all states in session storage
+        const allData = {
+            guardians,
+            selectedFiles: Object.entries(selectedFiles).reduce((acc: any, [key, file]) => {
+                acc[key] = file ? { name: file.name, type: file.type, size: file.size } : null;
+                return acc;
+            }, {}),
+            selectedDeathCertificateFiles: Object.entries(selectedDeathCertificateFiles).reduce((acc: any, [key, file]) => {
+                acc[key] = file ? { name: file.name, type: file.type, size: file.size } : null;
+                return acc;
+            }, {}),
+        };
+
         try {
-            sessionStorage.setItem('guardians', JSON.stringify(guardians)); // Sadece guardians verisini kaydet
+            sessionStorage.setItem('guardianFormData', JSON.stringify(allData)); // Save the entire state
             message.success('Guardian data saved to session storage!');
             onGuardiansSubmit(guardians);
         } catch (error) {

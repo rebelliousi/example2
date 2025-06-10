@@ -1,7 +1,7 @@
 import type { IconProps } from "../../models/models";
 
 
-const TrashIcon: React.FC<IconProps> = ({ size = 20, className, ...props }) => {
+const TrashIcon: React.FC<IconProps> = ({ size = 17, className, ...props }) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

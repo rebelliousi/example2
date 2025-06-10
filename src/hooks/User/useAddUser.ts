@@ -14,6 +14,7 @@ export const useAddUser = () => {
 
   return useMutation({
     mutationFn: async (newUser: UserInfo) => {
+      // API'den gelen yanıtı döndür
       return await api.post("/admission/user/", newUser);
     },
     onSuccess: () => {
