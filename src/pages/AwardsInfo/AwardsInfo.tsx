@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import PlusIcon from "../../assets/icons/PlusIcon";
 import TrashIcon from "../../assets/icons/TrashIcon";
 import { useSendFiles } from '../../hooks/Client/useSendFIles';
+import toast from "react-hot-toast";
 
 const OlympicType = {
     AREA: 'area',
@@ -36,7 +37,7 @@ const AwardsInfo = () => {
     const navigate = useNavigate();
 
     const [awardInfos, setAwardInfos] = useState<AwardInfo[]>([{
-        type: OlympicType.AREA,
+        type: null,  // Changed to null, was OlympicType.AREA
         description: '',
         files: [],
         filePaths: [],
@@ -78,11 +79,11 @@ const AwardsInfo = () => {
                     updatedAwardInfos[index].filePaths.push(data.path);
                     setAwardInfos(updatedAwardInfos);
 
-                    message.success('File uploaded successfully');
+                    toast.success('File uploaded successfully');
                 },
                 onError: (error: any) => {
                     console.error('File upload failed', error);
-                    message.error('File upload failed');
+                    toast.error('File upload failed');
                 },
             });
         }
@@ -99,7 +100,7 @@ const AwardsInfo = () => {
             ...awardInfos,
             {
                 type: null,
-                description: null,
+                description: '',  // Changed to ''
                 files: [],
                 filePaths: [],
             },
@@ -113,6 +114,25 @@ const AwardsInfo = () => {
     };
 
     const handleSubmit = () => {
+        for (let i = 0; i < awardInfos.length; i++) {
+            const info = awardInfos[i];
+
+            if (!info.type) {
+                toast.error(`Please select an award type for entry ${i + 1}.`);
+                return;
+            }
+
+            if (!info.description) {
+                toast.error(`Please enter a description for entry ${i + 1}.`);
+                return;
+            }
+
+            if (info.files.length === 0) {
+                toast.error(`Please upload a certificate for entry ${i + 1}.`);
+                return;
+            }
+        }
+
         sessionStorage.setItem('awardInformation', JSON.stringify(awardInfos));
         navigate("/infos/other-doc-info");
     };
@@ -126,7 +146,7 @@ const AwardsInfo = () => {
                 // Tip güvenliğini sağla
                 const typedData: AwardInfo[] = parsedData.map((item: any) => ({
                     type: item.type as OlympicTypeValue | null,
-                    description: item.description || null,
+                    description: item.description || '',  // Changed to ''
                     files: item.files || [],
                     filePaths: item.filePaths ? (item.filePaths as string[]) : [],
                 }));
@@ -137,7 +157,7 @@ const AwardsInfo = () => {
                 setAwardInfos([
                     {
                         type: null,
-                        description: null,
+                        description: '',  // Changed to ''
                         files: [],
                         filePaths: [],
                     },
@@ -171,8 +191,9 @@ const AwardsInfo = () => {
                                     <Select
                                         placeholder="Select Award Type"
                                         className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                                        value={awardInfos[index].type || undefined}
+                                        value={awardInfo.type || undefined}
                                         onChange={(value) => handleAwardTypeChange(index, value as OlympicTypeValue)}
+                                      
                                     >
                                         {Object.entries(OlympicType).map(([key, value]) => (
                                             <Select.Option key={key} value={value as OlympicTypeValue}>
@@ -191,6 +212,7 @@ const AwardsInfo = () => {
                                         className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                         value={awardInfo.description || ""}
                                         onChange={(e) => handleAwardInfoChange(index, "description", e.target.value)}
+                                        required // Added required attribute
                                     />
                                 </Space>
                             </div>
@@ -217,6 +239,7 @@ const AwardsInfo = () => {
                                             onChange={(e) => handleFileChange(index, e)}
                                             ref={(el) => setFileInputRef(index, el)}
                                             accept="image/*,application/pdf"
+                                            required // Added required attribute - Needs programmatic handling
                                         />
                                         <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
                                     </div>
@@ -247,19 +270,19 @@ const AwardsInfo = () => {
 
                 <div className="flex justify-end mt-10 space-x-5">
                     <Link to='/infos/education-info'
-                        className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
+                        className="text-textSecondary bg-white border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all hover:duration-500"
 
 
                     >
                         Previous
                     </Link>
 
-                    <Button
+                    <button
                         onClick={handleSubmit}
-                        className="bg-primaryBlue text-white py-2 px-4 rounded"
+                        className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
                     >
                         Next
-                    </Button>
+                    </button>
                 </div>
             </Space>
             {isFileUploadLoading && <div>File is uploading...</div>}

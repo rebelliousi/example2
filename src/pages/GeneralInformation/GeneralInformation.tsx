@@ -1,10 +1,12 @@
-import { Input, Space, Select, Radio, Button, DatePicker, message } from "antd";
+import { Input, Space, Select, Radio, DatePicker } from "antd";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useArea } from "../../hooks/Area/useAreas";
 import type { RadioChangeEvent } from "antd";
 import type { Moment } from "moment";
 import moment from "moment";
+
+import toast from 'react-hot-toast'; // Import react-hot-toast
 
 const { Option } = Select;
 
@@ -68,6 +70,74 @@ const GeneralInformationForm = () => {
     };
 
     const handleSubmit = () => {
+        // Validation
+        if (!formData.first_name) {
+            toast.error('First Name is required.');
+            return;
+        }
+        if (!formData.last_name) {
+            toast.error('Last Name is required.');
+            return;
+        }
+        if (!formData.father_name) {
+            toast.error('Father\'s Name is required.');
+            return;
+        }
+        if (formData.gender === null) { // Use === null for checking null or undefined
+            toast.error('Gender is required.');
+            return;
+        }
+        if (!formData.nationality) {
+            toast.error('Nationality is required.');
+            return;
+        }
+        if (!formData.date_of_birth) {
+            toast.error('Date of Birth is required.');
+            return;
+        }
+        if (formData.area === null) {  // Use === null for checking null or undefined
+            toast.error('Area is required.');
+            return;
+        }
+        if (!formData.address) {
+            toast.error('Address is required.');
+            return;
+        }
+        if (!formData.place_of_birth) {
+            toast.error('Place of Birth is required.');
+            return;
+        }
+
+        // Phone Number Validation
+        const homePhoneRegex = /^\+993\d{7}$/; // +993 den sonra 7 rakam
+        const cellPhoneRegex = /^\+993\d{8}$/; // +993 den sonra 8 rakam
+
+        if (!formData.home_phone) {
+            toast.error('Home Phone Number is required.');
+            return;
+        } else if (!homePhoneRegex.test(formData.home_phone)) {
+            toast.error('Home Phone Number must start with +993 and contain exactly 7 digits.');
+            return;
+        }
+
+        if (!formData.phone) {
+            toast.error('Cellphone Number is required.');
+            return;
+        } else if (!cellPhoneRegex.test(formData.phone)) {
+            toast.error('Cellphone Number must start with +993 and contain exactly 8 digits.');
+            return;
+        }
+
+        // Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!formData.email) {
+            toast.error('Email is required.');
+            return;
+        } else if (!emailRegex.test(formData.email)) {
+            toast.error('Please enter a valid email address.');
+            return;
+        }
+
         let formattedDate = "";
         if (formData.date_of_birth) {
             const dateMoment = moment(formData.date_of_birth, "YYYY-MM-DD", true);
@@ -132,6 +202,7 @@ const GeneralInformationForm = () => {
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                 value={formData.first_name}
                                 onChange={(e) => handleInputChange(e, "first_name")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -146,6 +217,7 @@ const GeneralInformationForm = () => {
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                 value={formData.last_name}
                                 onChange={(e) => handleInputChange(e, "last_name")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -160,6 +232,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.father_name}
                                 onChange={(e) => handleInputChange(e, "father_name")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -172,6 +245,7 @@ const GeneralInformationForm = () => {
                             <Radio.Group
                                 onChange={handleGenderChange}
                                 value={formData.gender}
+
                             >
                                 <Radio value="male">Male</Radio>
                                 <Radio value="female">Female</Radio>
@@ -189,6 +263,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.nationality}
                                 onChange={(e) => handleInputChange(e, "nationality")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -207,6 +282,7 @@ const GeneralInformationForm = () => {
                                 }
                                 onChange={handleDateChange}
                                 format="YYYY-MM-DD"
+                                required // Make the DatePicker required
                             />
                         </Space>
                     </div>
@@ -223,6 +299,7 @@ const GeneralInformationForm = () => {
                                 onChange={handleAreaChange}
                                 loading={isAreaLoading}
                                 allowClear
+
                             >
                                 {areaOptions.map((area) => (
                                     <Option key={area.id} value={area.id}>
@@ -243,6 +320,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.address}
                                 onChange={(e) => handleInputChange(e, "address")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -257,6 +335,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.place_of_birth}
                                 onChange={(e) => handleInputChange(e, "place_of_birth")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -280,6 +359,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.home_phone}
                                 onChange={(e) => handleInputChange(e, "home_phone")}
+
                             />
                         </Space>
                     </div>
@@ -294,6 +374,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.phone}
                                 onChange={(e) => handleInputChange(e, "phone")}
+
                             />
                         </Space>
                     </div>
@@ -308,6 +389,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.email}
                                 onChange={(e) => handleInputChange(e, "email")}
+                                required // Make the input required
                             />
                         </Space>
                     </div>
@@ -316,18 +398,18 @@ const GeneralInformationForm = () => {
                 <div className="flex justify-end mt-12 space-x-5">
                     <Link
                         to="/infos/degree-information"
-                        className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
+                        className="text-textSecondary bg-white border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all hover:duration-500"
                     >
                         Previous
                     </Link>
 
-                    <Button
-                        type="primary"
+                    <button
+
                         onClick={handleSubmit}
-                        className="bg-primaryBlue text-white py-2 px-4 rounded"
+                        className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
                     >
                         Next
-                    </Button>
+                    </button>
                 </div>
             </Space>
         </div>

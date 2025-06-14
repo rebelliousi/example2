@@ -3,7 +3,7 @@ import api from "../../api";
 
 export type GuardianRelation = 'mother' | 'father' | 'grandparent' | 'sibling' | 'uncle' | 'aunt';
 export type OlympicType = 'area' | 'region' | 'state' | 'international' | 'other';
-export type DocumentType = 
+export type DocumentType =
   | 'school_certificate'
   | 'passport'
   | 'military_document'
@@ -38,7 +38,7 @@ export interface Institution {
   name: string;
   school_gpa: number;
   graduated_year: number;
-  certificates: number[];  
+  certificates: number[];
 }
 
 export interface Olympic {
@@ -70,7 +70,7 @@ export interface ClientUser {
 }
 
 export interface IClient {
-  degree?: 'BACHELOR' | 'MASTER' ; // API'de görüldüğü için ekledim
+  degree?: 'BACHELOR' | 'MASTER'; // API'de görüldüğü için ekledim
   primary_major: number;
   admission_major: number[];
   user: ClientUser;
@@ -86,10 +86,20 @@ export const useAddClient = () => {
 
   return useMutation({
     mutationFn: async (newApplication: IClient) => {
-      return await api.post('/admission/client/', newApplication);
+      const response = await api.post('/admission/client/', newApplication);
+      return response.data; // response.data içinde id var
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['client'] });
+
+      // Burada id'yi sessionStorage'e kaydediyoruz
+      if (data && data.id) {
+        sessionStorage.setItem('clientId', data.id.toString()); // id'yi string'e çeviriyoruz
+      }
+    },
+    onError: (error) => {
+      // Hata durumunda yapılacak işlemler (opsiyonel)
+      console.error("Client eklenirken bir hata oluştu:", error);
     },
   });
 };

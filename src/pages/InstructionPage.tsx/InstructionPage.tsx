@@ -1,20 +1,32 @@
-// pages/NextPage/NextPage.tsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDocument } from '../../hooks/Documents/useDocuments';
 import { useAuthStore } from '../../store/useAuthStore';
 import LoadingIndicator from '../../components/Status/LoadingIndicator';
+import { useModalStore } from '../../store/loginModalStore';
 
 const InstructionPage: React.FC = () => {
     const [isAgreed, setIsAgreed] = useState(false);
     const navigate = useNavigate();
-    const { isLoggedIn } = useAuthStore(); // Get isLoggedIn state from zustand
+    const { isLoggedIn } = useAuthStore();
     const { data, isLoading, isError } = useDocument();
+    const { openLoginModal } = useModalStore();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            // Store the current path in localStorage
+            localStorage.setItem('redirectAfterLogin', location.pathname);
+        }
+    }, [isLoggedIn, location.pathname]);
 
     const handleStartClick = () => {
         if (isAgreed) {
             if (!isLoggedIn) {
-                navigate('/login');
+             
+                openLoginModal();
+
+                
             } else {
                 navigate('/infos/degree-information');
             }
@@ -28,7 +40,7 @@ const InstructionPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="min-h-[800px] flex items-center justify-center"><LoadingIndicator/></div>;
+        return <div className="min-h-[800px] flex items-center justify-center"><LoadingIndicator /></div>;
     }
 
     if (isError || !data || !data.results || data.results.length === 0) {
@@ -43,7 +55,7 @@ const InstructionPage: React.FC = () => {
         <div className="container mx-auto mt-14 p-4 min-h-screen">
             <div className="text-center mb-10">
                 <h1 className='text-primaryText text-[18px] font-[400]'>
-                    TURKMENISTANYN OGUZ HAN ADYNDAKY INZENER TEHNOLOGIYALAR UNIWERSITETI <br/> {year}- {year ? parseInt(year) + 1 : 'YYYY'} YYL
+                    TURKMENISTANYN OGUZ HAN ADYNDAKY INZENER TEHNOLOGIYALAR UNIWERSITETI <br /> {year}- {year ? parseInt(year) + 1 : 'YYYY'} YYL
                 </h1>
             </div>
 

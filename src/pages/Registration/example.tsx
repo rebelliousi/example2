@@ -6,6 +6,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuthStore } from "../../store/useAuthStore";
 import { Form, Input, Button, Modal } from "antd";
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import "antd/dist/reset.css";
+
 
 interface UserInfo {
     first_name: string;
@@ -20,17 +22,22 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
-    const [form] = Form.useForm(); // Ant Design Form Instance
-    const [isPending, setIsPending] = useState(false); // Local pending state.  `useAddUser` hook's `isPending` probably won't update fast enough for good UX
+    const [form] = Form.useForm();
     const navigate = useNavigate();
-    const { mutateAsync } = useAddUser();
+    const { mutateAsync, isPending } = useAddUser();
     const { login } = useAuthStore();
 
-
     const onFinish = async (values: any) => {
-        setIsPending(true);
+        const newUser: UserInfo = {
+            first_name: values.first_name,
+            last_name: values.last_name,
+            father_name: values.father_name,
+            email: values.email,
+            phone: values.phone,
+        };
+
         try {
-            const response = await mutateAsync(values);  // Pass ALL form values to the API
+            const response = await mutateAsync(newUser);
 
             if (response?.data?.data?.access && response?.data?.data?.refresh) {
                 localStorage.setItem("accessToken", response.data.data.access);
@@ -55,13 +62,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
                     duration: 5000,
                 }
             );
-        } finally {
-            setIsPending(false);
         }
     };
 
     const onFinishFailed = (errorInfo: any) => {
-        console.log('Failed:', errorInfo);
+        console.log("Failed:", errorInfo);
     };
 
     return (
@@ -72,69 +77,67 @@ const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
             <Form
                 form={form}
                 name="basic"
+                layout="vertical"
                 initialValues={{ remember: true }}
                 onFinish={onFinish}
                 onFinishFailed={onFinishFailed}
                 autoComplete="off"
-                layout="vertical" // Stack labels above inputs
-
             >
                 <Form.Item
                     label="Name"
                     name="first_name"
-                    rules={[{ required: true, message: 'Please input your first name!' }]}
+                    rules={[{ required: true, message: "Please input your name!" }]}
                 >
-                    <Input prefix={<UserOutlined style={{ marginRight: 8 }} />} placeholder="First Name" />
+                    <Input prefix={<UserOutlined />} />
                 </Form.Item>
 
                 <Form.Item
                     label="Surname"
                     name="last_name"
-                    rules={[{ required: true, message: 'Please input your last name!' }]}
+                    rules={[{ required: true, message: "Please input your surname!" }]}
                 >
-                    <Input prefix={<UserOutlined style={{ marginRight: 8 }} />} placeholder="Last Name" />
+                    <Input prefix={<UserOutlined />} />
                 </Form.Item>
 
                 <Form.Item
-                    label="Father's Name"
+                    label="Father Name"
                     name="father_name"
-                    rules={[{ required: true, message: 'Please input your father\'s name!' }]}
+                    rules={[{ required: true, message: "Please input your father's name!" }]}
                 >
-                    <Input prefix={<UserOutlined style={{ marginRight: 8 }} />} placeholder="Father's Name" />
+                    <Input prefix={<UserOutlined />} />
                 </Form.Item>
 
                 <Form.Item
-                    label="Phone Number"
+                    label="Phone"
                     name="phone"
-                    rules={[
-                        { required: true, message: 'Please input your phone number!' },
-                        {
-                            pattern: /^\+[0-9]*$/,
-                            message: 'Please enter a valid phone number starting with "+"'
-                        }
-                    ]}
+                    rules={[{ required: true, message: "Please input your phone number!" }]}
                 >
-                    <Input prefix={<PhoneOutlined style={{ marginRight: 8 }} />} placeholder="Phone Number" />
+                    <Input prefix={<PhoneOutlined />} />
                 </Form.Item>
 
                 <Form.Item
                     label="Email"
                     name="email"
                     rules={[
-                        { required: true, message: 'Please input your email!' },
-                        { type: 'email', message: 'Please enter a valid email!' }
+                        { required: true, message: "Please input your email!" },
+                        { type: "email", message: "Please enter a valid email address!" },
                     ]}
                 >
-                    <Input prefix={<MailOutlined style={{ marginRight: 8 }} />} placeholder="Email" />
+                    <Input prefix={<MailOutlined />} />
                 </Form.Item>
 
 
-
                 <div className="grid grid-cols-2 space-x-2">
-                    <Button onClick={closeModal}>
+                    <Button onClick={closeModal} className=" text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" >
                         Cancel
                     </Button>
-                    <Button type="primary" htmlType="submit" loading={isPending}>
+
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={isPending}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
                         {isPending ? "Registering..." : "Register"}
                     </Button>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Select, DatePicker, Input, message, Space, Button } from 'antd';
+import { Select, DatePicker, Input, message, Space, Button, Form } from 'antd';
 import 'antd';
 import moment from 'moment';
 import type { Moment } from "moment";
@@ -9,42 +9,10 @@ import InfoCircleIcon from '../../assets/icons/InfoCircleIcon';
 import { useSendFiles } from '../../hooks/Client/useSendFIles';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-
-// Enum'lar yerine sabit nesneler
-const GuardianRelation = {
-    FATHER: 'father',
-    MOTHER: 'mother',
-    GRANDPARENT: 'grandparent',
-    SIBLING: 'sibling',
-    UNCLE: 'uncle',
-    AUNT: 'aunt',
-} as const;
-type GuardianRelationType = typeof GuardianRelation[keyof typeof GuardianRelation];
-const DocumentType = {
-    SCHOOL_CERTIFICATE: 'school_certificate',
-    PASSPORT: 'passport',
-    MILITARY_DOCUMENT: 'military_document',
-    INFORMATION: 'information',
-    RELATIONSHIP_TREE: 'relationship_tree',
-    MEDICAL_RECORD: 'medical_record',
-    DESCRIPTION: 'description',
-    TERJIIMEHAL: 'terjiimehal',
-    LABOR_BOOK: 'labor_book',
-    DUSHUNDIRISH: 'Dushundirish',
-} as const;
-type DocumentTypeType = typeof DocumentType[keyof typeof DocumentType];
-
-interface WithFilePaths {
-    filePaths?: string[];
-}
-
-interface GuardianDocumentWithFile {
-    type: DocumentTypeType;
-    file: number | null;
-}
+import toast, { Toaster } from 'react-hot-toast';
 
 interface GuardianWithFiles {
-    relation: GuardianRelationType;
+    relation: string;
     first_name: string;
     last_name: string;
     father_name: string;
@@ -53,21 +21,19 @@ interface GuardianWithFiles {
     phone: string;
     address: string;
     work_place: string;
-    documents: GuardianDocumentWithFile[];
+    documents: any[];
     filePaths: string[];
     isDeceased?: boolean | null;
 }
 
-// Guardian Form Component
 interface GuardianFormProps {
     initialGuardians?: GuardianWithFiles[];
     onGuardiansSubmit: (guardians: GuardianWithFiles[]) => void;
 }
-
 const GuardianForm: React.FC<GuardianFormProps> = ({
     initialGuardians = [
         {
-            relation: GuardianRelation.FATHER,
+            relation: 'father',
             first_name: '',
             last_name: '',
             father_name: '',
@@ -81,7 +47,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             isDeceased: null,
         },
         {
-            relation: GuardianRelation.MOTHER,
+            relation: 'mother',
             first_name: '',
             last_name: '',
             father_name: '',
@@ -99,7 +65,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 }) => {
     const [guardians, setGuardians] = useState<GuardianWithFiles[]>(initialGuardians);
 
-    // **Modified States to Objects**
+    // State for Selected Files
     const [selectedFiles, setSelectedFiles] = useState<Record<number, File | null>>({});
     const [selectedDeathCertificateFiles, setSelectedDeathCertificateFiles] = useState<Record<number, File | null>>({});
 
@@ -117,7 +83,6 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
         deathCertificateInputRefs.current = deathCertificateInputRefs.current.slice(0, guardians.length);
     }, [guardians.length]);
 
-
     const handleGuardianChange = (index: number, name: string, value: any) => {
         setGuardians((prev) => {
             const newGuardians = [...prev];
@@ -129,9 +94,9 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
         });
     };
 
-    const handleFileUpload = async (index: number, file: File | null, documentType: DocumentTypeType, isDeathCertificate: boolean = false) => {
+    const handleFileUpload = async (index: number, file: File | null, documentType: string, isDeathCertificate: boolean = false) => {
         if (!file) {
-            message.error('Please select a file.');
+            toast.error('Please select a file.');
             return;
         }
 
@@ -142,22 +107,18 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             onSuccess: (data: any) => {
                 setGuardians((prev) => {
                     const newGuardians = [...prev];
-                    const updatedDocuments: GuardianDocumentWithFile[] = [...newGuardians[index].documents, {
+                    newGuardians[index].documents = [...newGuardians[index].documents, {
                         type: documentType,
                         file: data.id,
                     }];
-                    newGuardians[index] = {
-                        ...newGuardians[index],
-                        documents: updatedDocuments,
-                        filePaths: [...(newGuardians[index].filePaths || []), data.path],
-                    };
+                    newGuardians[index].filePaths = [...newGuardians[index].filePaths, data.path];
                     return newGuardians;
                 });
-                message.success('File uploaded successfully');
+                toast.success('File uploaded successfully');
             },
             onError: (error: any) => {
                 console.error('File upload failed', error);
-                message.error('File upload failed');
+                toast.error('File upload failed');
             },
         });
 
@@ -174,18 +135,17 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
         }
     };
 
-
     const handleFileChange = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files && event.target.files[0];
         if (file) {
-            handleFileUpload(index, file, DocumentType.PASSPORT); // Otomatik olarak PASSPORT olarak ayarla
+            handleFileUpload(index, file, 'passport'); // Passport tipi burada belirtiliyor
         }
     };
 
     const handleDeathCertificateChange = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files && event.target.files[0];
         if (file) {
-            handleFileUpload(index, file, DocumentType.SCHOOL_CERTIFICATE, true); // Otomatik olarak SCHOOL_CERTIFICATE olarak ayarla (örnek)
+            handleFileUpload(index, file, 'death_certificate', true); // Ölüm belgesi tipi burada belirtiliyor
         }
     };
 
@@ -203,19 +163,19 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 
     const formatDateForApi = (date: Moment | null): string => {
         if (!date) return '';
-        return date.format('YYYY-MM-DD'); // API expects YYYY-MM-DD
+        return date.format('YYYY-MM-DD');
     };
 
     const formatDateForInput = (dateString: string): Moment | null => {
         if (!dateString) return null;
-        return moment(dateString, 'YYYY-MM-DD');  // Parse as YYYY-MM-DD
+        return moment(dateString, 'YYYY-MM-DD');
     };
 
     const addGuardian = () => {
         setGuardians((prev) => ([
             ...prev,
             {
-                relation: GuardianRelation.GRANDPARENT,
+                relation: '',
                 first_name: '',
                 last_name: '',
                 father_name: '',
@@ -230,7 +190,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             },
         ]));
 
-        // **Initialize new entries in state objects**
+        // State'i güncelle
         setSelectedFiles(prev => ({ ...prev, [guardians.length]: null }));
         setSelectedDeathCertificateFiles(prev => ({ ...prev, [guardians.length]: null }));
     };
@@ -241,6 +201,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             newItems.splice(index, 1);
             return newItems;
         });
+
         setSelectedFiles(prev => {
             const { [index]: removed, ...rest } = prev;
             return rest;
@@ -252,19 +213,74 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
     };
 
     const handleSubmit = () => {
+        // Phone Number Validation
+        const phoneRegex = /^\+993\d{8}$/;
+
+        const isFatherDead = guardians[0].isDeceased === true;
+        const isMotherDead = guardians[1].isDeceased === true;
+        const isOtherGuardiansRequired = isFatherDead && isMotherDead;
+
+        // Form doğrulama işlemleri
+        for (let i = 0; i < guardians.length; i++) {
+            const guardian = guardians[i];
+
+            if (!guardian.first_name || !guardian.last_name || !guardian.father_name || !guardian.date_of_birth || !guardian.place_of_birth) {
+                toast.error(`Please fill in all required fields for Guardian ${i + 1}.`);
+                return;
+            }
+
+            // Sadece hayatta olan gardiyanlar için adres, iletişim ve pasaport bilgisi zorunlu
+            if ((guardian.isDeceased === null || guardian.isDeceased === false) && (!guardian.address || !guardian.phone || !guardian.work_place || !selectedFiles[i])) {
+                toast.error(`Please fill in all required address, contact and passport information for Guardian ${i + 1}.`);
+                return;
+            }
+
+            // Ölen gardiyanlar için ölüm belgesi zorunlu
+            if (guardian.isDeceased === true && !selectedDeathCertificateFiles[i]) {
+                toast.error(`Please fill in all required death certificate information for Guardian ${i + 1}.`);
+                return;
+            }
+
+            // Telefon numarası doğrulaması
+            if ((guardian.isDeceased === null || guardian.isDeceased === false) && !guardian.phone) {
+                toast.error(`Phone Number is required for Guardian ${i + 1}.`);
+                return;
+            } else if ((guardian.isDeceased === null || guardian.isDeceased === false) && !phoneRegex.test(guardian.phone)) {
+                toast.error(`Phone Number must start with +993 and contain 8 digits for Guardian ${i + 1}.`);
+                return;
+            }
+        }
+
+        // Validate that at least one other guardian is added if both parents are deceased
+        if (isOtherGuardiansRequired && guardians.length <= 2) {
+            toast.error("Since both father and mother are deceased, please add at least one other guardian.");
+            return;
+        }
+
+        // Validate each 'other' guardian (index > 1) if they exist
+        if (isOtherGuardiansRequired) {
+            for (let i = 2; i < guardians.length; i++) {
+                const guardian = guardians[i];
+
+                if (!guardian.relation || !guardian.first_name || !guardian.last_name || !guardian.father_name || !guardian.date_of_birth || !guardian.place_of_birth || !guardian.address || !guardian.phone || !guardian.work_place || !selectedFiles[i]) {
+                    toast.error(`Please fill in all required fields for Guardian ${i + 1}.`);
+                    return;
+                }
+            }
+        }
+
         try {
             sessionStorage.setItem('guardians', JSON.stringify(guardians)); // Sadece guardians verisini kaydet
-            message.success('Guardian data saved to session storage!');
+            toast.success('Guardian data saved to session storage!');
             onGuardiansSubmit(guardians);
         } catch (error) {
             console.error('Error saving to session storage:', error);
-            message.error('Failed to save guardian data to session storage!');
+            toast.error('Failed to save guardian data to session storage!');
         }
 
         navigate("/infos/education-info");
     };
 
-    // Helper function to set fileInputRef at a specific index
     const setFileInputRef = (index: number, element: HTMLInputElement | null) => {
         if (fileInputRefs.current) {
             fileInputRefs.current[index] = element;
@@ -287,8 +303,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             return newGuardians;
         });
     };
-
-    const deleteFile = (index: number, isDeathCertificate: boolean = false) => {
+      const deleteFile = (index: number, isDeathCertificate: boolean = false) => {
         setGuardians(prev => {
             const newGuardians = [...prev];
             const guardianToUpdate = { ...newGuardians[index] };
@@ -312,15 +327,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             });
         }
 
-        message.success('File deleted successfully');
+        toast.success('File deleted successfully');
     };
 
-
-    // Function to render the form for a single guardian
     const renderGuardianForm = (guardian: GuardianWithFiles, index: number, isOtherGuardian: boolean = false) => {
-
         const handleDateChange = (date: Moment | null) => {
-            // Update the guardian's date_of_birth using the formatted date string.
             handleGuardianChange(index, 'date_of_birth', date ? formatDateForApi(date) : '');
         };
 
@@ -328,11 +339,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             <div className="col-span-6">
                 <div className="mb-4 flex items-center justify-between">
                     <h1 className="text-headerBlue text-[14px] font-[500]">
-                        {guardian.relation === GuardianRelation.FATHER ? "Father's General Information" :
-                            guardian.relation === GuardianRelation.MOTHER ? "Mother's General Information" :
+                        {guardian.relation === 'father' ? "Father's General Information" :
+                            guardian.relation === 'mother' ? "Mother's General Information" :
                                 `Guardian ${index + 1} General Information`}
                     </h1>
-                    {guardian.relation !== GuardianRelation.FATHER && guardian.relation !== GuardianRelation.MOTHER && (
+                    {guardian.relation !== 'father' && guardian.relation !== 'mother' && (
                         <button
                             type="button"
                             onClick={() => removeItem(index)}
@@ -344,28 +355,37 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                 </div>
 
                 {/* Conditionally render the Relation field based on the guardian's relation */}
-                {guardian.relation !== GuardianRelation.FATHER && guardian.relation !== GuardianRelation.MOTHER && (
+                {guardian.relation !== 'father' && guardian.relation !== 'mother' && (
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                         <label className="w-[155px] font-[400] text-[14px] self-center">
                             Relation:
                         </label>
                         <div className=" flex w-[400px]">
                             <Select
-                                value={guardian.relation}
+                                value={guardian.relation || undefined} // Use undefined for no selection
                                 onChange={(value) => handleGuardianChange(index, 'relation', value)}
                                 style={{ width: '100%', height: '40px' }}
+                                placeholder="Choose your Relation"
+                                allowClear // Add allowClear to enable clearing the selection
+
                             >
-                                {Object.entries(GuardianRelation).map(([key, value]) => (
-                                    <Select.Option key={key} value={value as GuardianRelationType}>
-                                        {key}
-                                    </Select.Option>
-                                ))}
+                                 <Select.Option key={'grandparent'} value={'grandparent'}>
+                                        grandparent
+                                </Select.Option>
+                                <Select.Option key={'sibling'} value={'sibling'}>
+                                        sibling
+                                </Select.Option>
+                                  <Select.Option key={'uncle'} value={'uncle'}>
+                                        uncle
+                                </Select.Option>
+                                  <Select.Option key={'aunt'} value={'aunt'}>
+                                        aunt
+                                </Select.Option>
                             </Select>
                         </div>
                     </div>
                 )}
-
-                {/* ... Rest of the form fields (first name, last name, etc.) ... */}
+                  {/* ... Rest of the form fields (first name, last name, etc.) ... */}
                 <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                     <label className="w-44 font-[400] text-[14px] self-center">
                         First name
@@ -376,6 +396,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                             value={guardian.first_name}
                             onChange={(e) => handleGuardianChange(index, 'first_name', e.target.value)}
+                            required
                         />
                     </Space>
                 </div>
@@ -390,6 +411,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                             value={guardian.last_name}
                             onChange={(e) => handleGuardianChange(index, 'last_name', e.target.value)}
+                            required
                         />
                     </Space>
                 </div>
@@ -405,6 +427,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                             value={guardian.father_name}
                             onChange={(e) => handleGuardianChange(index, 'father_name', e.target.value)}
+                            required
                         />
                     </Space>
                 </div>
@@ -419,6 +442,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             value={guardian.date_of_birth ? formatDateForInput(guardian.date_of_birth) : null}
                             onChange={handleDateChange}
                             format="YYYY-MM-DD"
+                            required
                         />
                     </Space>
                 </div>
@@ -433,11 +457,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             className="w-[400px]  border-[#DFE5EF] rounded-md text-[14px]"
                             value={guardian.place_of_birth}
                             onChange={(e) => handleGuardianChange(index, 'place_of_birth', e.target.value)}
+                            required
                         />
                     </Space>
                 </div>
-
-                {/*Conditionally render "Dead" select based on "isOtherGuardian" */}
+                 {/*Conditionally render "Dead" select based on "isOtherGuardian" */}
                 {!isOtherGuardian && (
                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                         <label className="w-44 font-[400] text-[14px] self-center">
@@ -450,6 +474,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                 value={guardian.isDeceased === null ? undefined : guardian.isDeceased}
                                 onChange={(value) => handleDeceasedChange(index, value)}
                                 allowClear
+
                             >
                                 <Select.Option value={true}>Yes</Select.Option>
                                 <Select.Option value={false}>No</Select.Option>
@@ -457,11 +482,10 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                         </Space>
                     </div>
                 )}
-
-                {/* Render address and contact information only if NOT other guardian and not deceased OR if it IS an other guardian*/}
+                  {/* Render address and contact information only if NOT other guardian and not deceased OR if it IS an other guardian*/}
                 {(!isOtherGuardian && guardian.isDeceased === false) || isOtherGuardian ? (
                     <>
-                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                     <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                             <label className="w-44 font-[400] text-[14px] self-center">
                                 Address
                             </label>
@@ -471,6 +495,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                     className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                     value={guardian.address}
                                     onChange={(e) => handleGuardianChange(index, 'address', e.target.value)}
+                                    required
                                 />
                             </Space>
                         </div>
@@ -481,7 +506,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             </h1>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                          <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                             <label className="w-44 font-[400] text-[14px] self-center">
                                 Phone number
                             </label>
@@ -491,6 +516,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                     className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                     value={guardian.phone}
                                     onChange={(e) => handleGuardianChange(index, 'phone', e.target.value)}
+
                                 />
                             </Space>
                         </div>
@@ -505,11 +531,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                     className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                     value={guardian.work_place}
                                     onChange={(e) => handleGuardianChange(index, 'work_place', e.target.value)}
+                                    required
                                 />
                             </Space>
                         </div>
-
-                        {/* Passport Upload */}
+                         {/* Passport Upload */}
                         <div className="flex sm:flex-row items-start gap-4 mb-4">
                             <label className="w-44 font-[400] text-[14px] self-center">
                                 Passport
@@ -518,21 +544,22 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                 <Space>
                                     <div className="flex items-center justify-between w-[400px]">
                                         <Button
-                                                onClick={() => {
-                                                    if (selectedFiles[index]) {
-                                                        deleteFile(index); // Call delete file function on click of the trash icon
-                                                    } else {
-                                                        handlePlusClick(index); // If there is no file, open the file selection
-                                                    }
-                                                }}
-                                                type="text"
-                                                className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
-                                            >
-                                                {selectedFiles[index]
-                                                    ? selectedFiles[index]!.name
-                                                    : "Attach Passport copy"}
-                                                {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
-                                            </Button>
+                                            onClick={() => {
+                                                if (selectedFiles[index]) {
+                                                    deleteFile(index); // Call delete file function on click of the trash icon
+                                                } else {
+                                                    handlePlusClick(index); // If there is no file, open the file selection
+                                                }
+                                            }}
+                                            type="text"
+                                            className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
+
+                                        >
+                                            {selectedFiles[index]
+                                                ? selectedFiles[index]!.name
+                                                : "Attach Passport copy"}
+                                            {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                        </Button>
                                         <input
                                             type="file"
                                             style={{ display: "none" }}
@@ -540,6 +567,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                             ref={(el) => {
                                                 setFileInputRef(index, el);
                                             }}
+                                            required
                                         />
                                     </div>
 
@@ -563,7 +591,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 
                             </div>
                         </div>
-                    </>
+                       </>
                 ) : (
                     guardian.isDeceased === true && (
                         <>
@@ -586,6 +614,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                                 }}
                                                 type="text"
                                                 className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
+
                                             >
                                                 {selectedDeathCertificateFiles[index]
                                                     ? selectedDeathCertificateFiles[index]!.name
@@ -599,6 +628,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                                 ref={(el) => {
                                                     setDeathCertificateInputRef(index, el);
                                                 }}
+                                                required
                                             />
                                         </div>
                                     </Space>
@@ -614,20 +644,19 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
         );
     };
 
-    // Initialize date values on component mount
     useEffect(() => {
-        setGuardians((prevGuardians) =>
-            prevGuardians.map((guardian) => ({
+        // Initial değerleri ayarla
+        setGuardians((prevGuardians) => {
+            return prevGuardians.map((guardian) => ({
                 ...guardian,
                 date_of_birth: guardian.date_of_birth ? formatDateForInput(guardian.date_of_birth)?.format('YYYY-MM-DD') || '' : '',
-                documents: guardian.documents || [],
-            }))
-        );
+            }));
+        });
     }, []);
-
 
     return (
         <div className="pt-10 px-4 pb-10">
+            <Toaster />
             <Space direction="vertical" size="middle" className="w-full">
                 <div className="grid grid-cols-12 gap-28 mb-14">
                     {/* Render Father's Form */}
@@ -654,18 +683,18 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             <div className="flex justify-end mt-12 space-x-5">
                 <Link
                     to="/infos/general-information"
-                    className="text-textSecondary border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all duration-500"
+                    className="text-textSecondary bg-white border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all hover:duration-500"
                 >
                     Previous
                 </Link>
 
-                <Button
-                    type="primary"
+                <button
+
                     onClick={handleSubmit}
-                    className="bg-primaryBlue text-white py-2 px-4 rounded"
+                    className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
                 >
                     Next
-                </Button>
+                </button>
             </div>
             {isFileUploadLoading && <div>File is uploading...</div>}
         </div>

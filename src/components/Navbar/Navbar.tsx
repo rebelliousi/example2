@@ -5,19 +5,21 @@ import logo from '../../../public/img/logo 1.png';
 import profile from '../../../public/img/image.png';
 import Button from '../Buttons/Button';
 import { Avatar } from '@mui/material';
-import { useAuthStore } from '../../store/useAuthStore'; // Import useAuthStore
+import { useAuthStore } from '../../store/useAuthStore';
+import { useModalStore } from '../../store/loginModalStore'; // Corrected path
 
-const Navbar = ({
-}) => {
+const Navbar: React.FC = () => {
     const [profileModal, setProfileModal] = useState(false);
     const navigate = useNavigate();
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { isLoggedIn, logout } = useAuthStore(); // Get isLoggedIn and logout function
+    const { isLoggedIn, logout } = useAuthStore();
+    const { openLoginModal } = useModalStore();
 
     const handleLogOut = useCallback(() => {
-        logout(); // call logout function from zustand
-        navigate('/login', { replace: true });
-    }, [navigate, logout]);
+        logout();
+        openLoginModal();
+        localStorage.removeItem('redirectAfterLogin'); // Clear stored path
+    }, [logout, openLoginModal]);
 
     const handleClickOutside = useCallback((event: MouseEvent) => {
         if (
@@ -40,8 +42,13 @@ const Navbar = ({
         setProfileModal((prev) => !prev);
     };
 
+    const handleLoginClick = (event: React.MouseEvent) => {
+        event.preventDefault();
+        openLoginModal();
+    };
+
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-30 bg-white `}>
+        <nav className={`fixed top-0 left-0 right-0  bg-white `}>
             <div className="container mx-auto py-4 flex items-center justify-between">
                 <div className="flex items-center justify-center space-x-1">
                     <img src={logo} alt="" className='w-10' />
@@ -49,7 +56,7 @@ const Navbar = ({
                 </div>
                 <div className="text-right flex items-center relative">
 
-                    {isLoggedIn ? (  // If user is logged in show user information
+                    {isLoggedIn ? (
                         <>
                             <div className="flex items-center mr-4">
                                 <button onClick={handleProfileClick} className="relative">
@@ -96,8 +103,8 @@ const Navbar = ({
                                 </div>
                             )}
                         </>
-                    ) : (  // else show Login link
-                        <Link to="/login" className="text-blue-500 hover:underline">
+                    ) : (
+                        <Link to="#" onClick={handleLoginClick} className="text-blue-500 hover:underline">
                             Login
                         </Link>
                     )}

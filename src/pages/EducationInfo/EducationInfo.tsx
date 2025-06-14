@@ -1,30 +1,27 @@
 import { Input, Space, Button, DatePicker, message } from "antd";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useArea } from "../../hooks/Area/useAreas";
 import type { Moment } from "moment";
 import PlusIcon from "../../assets/icons/PlusIcon";
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
 import TrashIcon from "../../assets/icons/TrashIcon";
-import moment from 'moment'; // moment'i import et
-import { useSendFiles } from '../../hooks/Client/useSendFIles'; // Hook'un doğru konumunu belirtin
+import moment from 'moment';
+import { useSendFiles } from '../../hooks/Client/useSendFIles';
+import toast from 'react-hot-toast';  // Import toast
 
-// const { Option } = Select; // REMOVE THIS LINE - Select is no longer used!
 
 interface EducationInformation {
     name: string;
     school_gpa: number;
     graduated_year: number;
-    files: string[]; // Assuming file IDs from backend
-    filePaths: string[]; // Assuming file paths from backend
+    files: string[];
+    filePaths: string[];
 }
 
 type EducationInformationKey = keyof EducationInformation;
 
 
 const EducationInfo = () => {
-    const { data: areaData, isLoading: isAreaLoading } = useArea();
-    const areaOptions = areaData?.results || [];
     const navigate = useNavigate();
 
     const [educationInfos, setEducationInfos] = useState<EducationInformation[]>([
@@ -44,19 +41,43 @@ const EducationInfo = () => {
         fileInputRefs.current = Array(educationInfos.length).fill(null);
     }, [educationInfos.length]);
 
-    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles(); // useSendFiles hook'unu ekleyin
+    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles();
 
     const handleInputChange = (
         index: number,
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
         fieldName: EducationInformationKey
     ) => {
-        const newEducationInfos = [...educationInfos];
-        newEducationInfos[index] = {
-            ...newEducationInfos[index],
-            [fieldName]: fieldName === 'school_gpa' ? parseFloat(e.target.value) : e.target.value as any, // Type assertion for dynamic keys
-        };
-        setEducationInfos(newEducationInfos);
+        let value = e.target.value;
+
+        if (fieldName === 'school_gpa') {
+            const regex = /^[0-5]?(\.\d*)?$/;
+            if (!regex.test(value)) {
+                return;
+            }
+
+            const parsedValue = value === '' ? 0 : parseFloat(value);
+
+            if (parsedValue > 5) {
+              return;
+            }
+
+            const newEducationInfos = [...educationInfos];
+            newEducationInfos[index] = {
+                ...newEducationInfos[index],
+                [fieldName]: parsedValue,
+            };
+            setEducationInfos(newEducationInfos);
+
+        } else {
+          const newEducationInfos = [...educationInfos];
+          newEducationInfos[index] = {
+              ...newEducationInfos[index],
+              [fieldName]: value as any,
+          };
+          setEducationInfos(newEducationInfos);
+        }
+
     };
 
     const handleNameChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -71,7 +92,7 @@ const EducationInfo = () => {
         const newEducationInfos = [...educationInfos];
         newEducationInfos[index] = {
             ...newEducationInfos[index],
-            graduated_year: date ? date.year() : 0, // Extract the year
+            graduated_year: date ? date.year() : 0,
         };
         setEducationInfos(newEducationInfos);
     };
@@ -80,7 +101,7 @@ const EducationInfo = () => {
     const deleteFile = (index: number) => {
         setSelectedFiles((prevSelectedFiles) => {
             const newSelectedFiles = [...prevSelectedFiles];
-            newSelectedFiles[index] = null; // Dosyayı listeden kaldır
+            newSelectedFiles[index] = null;
             return newSelectedFiles;
         });
 
@@ -88,8 +109,8 @@ const EducationInfo = () => {
             const newEducationInfos = [...prevEducationInfos];
             newEducationInfos[index] = {
                 ...newEducationInfos[index],
-                files: [], // Sertifika listesini temizle - Changed to 'files'
-                filePaths: [], // Dosya yolu listesini temizle
+                files: [],
+                filePaths: [],
             };
             return newEducationInfos;
         });
@@ -111,15 +132,14 @@ const EducationInfo = () => {
 
         if (file) {
             const formData = new FormData();
-            formData.append('path', file); // 'path' yerine sunucunuzun beklediği alanı kullanın
+            formData.append('path', file);
 
             uploadFile(formData, {
                 onSuccess: (data: any) => {
-                    // Dosya başarıyla yüklendi, sunucudan dönen URL veya ID'yi kullanın
                     const newEducationInfos = [...educationInfos];
                     newEducationInfos[index] = {
                         ...newEducationInfos[index],
-                        files: [...newEducationInfos[index].files, data.id], // Veya sunucudan dönen URL'yi kullanın: data.path - Changed to 'files' and assumed data.id is the file ID
+                        files: [...newEducationInfos[index].files, data.id],
                         filePaths: [...newEducationInfos[index].filePaths, data.path],
                     };
                     setEducationInfos(newEducationInfos);
@@ -171,15 +191,29 @@ const EducationInfo = () => {
     };
 
     const handleSubmit = () => {
-        // Validation before saving to sessionStorage
-        const hasEmptyName = educationInfos.some(info => !info.name);
+       // Form validation
+       for (let i = 0; i < educationInfos.length; i++) {
+            const info = educationInfos[i];
+            if (!info.name) {
+                toast.error(`School Name is required for entry ${i + 1}`);
+                return;
+            }
+            if (info.school_gpa === null || info.school_gpa === undefined || isNaN(info.school_gpa) || info.school_gpa === 0) {
+                toast.error(`School GPA is required for entry ${i + 1}`);
+                return;
+            }
+            if (!info.graduated_year) {
+                toast.error(`Graduation Year is required for entry ${i + 1}`);
+                return;
+            }
 
-        if (hasEmptyName) {
-            message.error("Please enter a school name for all entries.");
-            return; // Stop submission
+            if (!info.files || info.files.length === 0) {
+                 toast.error(`Certificate of graduation is required for entry ${i + 1}`);
+                 return;
+             }
         }
 
-        // sessionStorage'a kaydet
+        // Save to sessionStorage and navigate
         sessionStorage.setItem('educationInformation', JSON.stringify(educationInfos));
         navigate("/infos/awards-info");
     };
@@ -193,7 +227,6 @@ const EducationInfo = () => {
         if (storedEducationInfos) {
             const parsedData = JSON.parse(storedEducationInfos);
 
-            // Tarih dönüştürme işlemini kaldır veya sadece yılı al
             const educationInfosWithYear = parsedData.map((educationInfo: any) => ({
                 ...educationInfo,
                 graduated_year: educationInfo.graduated_year ? parseInt(educationInfo.graduated_year, 10) : 0,
@@ -226,6 +259,7 @@ const EducationInfo = () => {
                                     className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                     value={educationInfo.name || ""}
                                     onChange={(e) => handleNameChange(index, e)}
+                                    required  // Added required
                                 />
                             </Space>
                         </div>
@@ -241,6 +275,9 @@ const EducationInfo = () => {
                                     className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                     value={educationInfo.school_gpa?.toString() || ""}
                                     onChange={(e) => handleSchoolGpaChange(index, e)}
+                                    max={5}
+                                    step="0.1"
+                                    required // Added required
                                 />
                             </Space>
                         </div>
@@ -256,6 +293,7 @@ const EducationInfo = () => {
                                     value={educationInfo.graduated_year ? moment(educationInfo.graduated_year.toString(), 'YYYY') : null}
                                     onChange={(date) => handleGraduatedYearChange(index, date)}
                                     placeholder="Select Year"
+                                    required // Added required
                                 />
                             </Space>
                         </div>
@@ -293,6 +331,7 @@ const EducationInfo = () => {
                                             }
                                         }}
                                         accept="image/*,application/pdf"
+                                        required
                                     />
 
                                     <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
@@ -327,16 +366,19 @@ const EducationInfo = () => {
                         Previous
                     </Link>
 
-                    <Button
-                        type="primary"
+                    <button
+                       
                         onClick={handleSubmit}
-                        className="bg-primaryBlue text-white py-2 px-4 rounded"
+                        className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
+
                     >
                         Next
-                    </Button>
+                    </button>
                 </div>
             </Space>
-            {isFileUploadLoading && <div>File is uploading...</div>} {/* Yükleme göstergesi */}
+            {isFileUploadLoading && <div>File is uploading...</div>}
+            {/* react-hot-toast container */}
+           
         </div>
     );
 };
