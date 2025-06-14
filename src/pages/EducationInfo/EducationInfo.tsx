@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';  // Import toast
 
 interface EducationInformation {
     name: string;
-    school_gpa: number;
+    school_gpa: number | null; // Make school_gpa nullable
     graduated_year: number;
     files: string[];
     filePaths: string[];
@@ -27,7 +27,7 @@ const EducationInfo = () => {
     const [educationInfos, setEducationInfos] = useState<EducationInformation[]>([
         {
             name: '',
-            school_gpa: 0,
+            school_gpa: null, // Initialize as null
             graduated_year: 0,
             files: [],
             filePaths: [],
@@ -56,10 +56,11 @@ const EducationInfo = () => {
                 return;
             }
 
-            const parsedValue = value === '' ? 0 : parseFloat(value);
+            // Parse the value as a number immediately
+            const parsedValue = value === '' ? null : Number(value); // Parse to null if empty
 
-            if (parsedValue > 5) {
-              return;
+            if (parsedValue !== null && parsedValue > 5) {
+                return;
             }
 
             const newEducationInfos = [...educationInfos];
@@ -70,12 +71,12 @@ const EducationInfo = () => {
             setEducationInfos(newEducationInfos);
 
         } else {
-          const newEducationInfos = [...educationInfos];
-          newEducationInfos[index] = {
-              ...newEducationInfos[index],
-              [fieldName]: value as any,
-          };
-          setEducationInfos(newEducationInfos);
+            const newEducationInfos = [...educationInfos];
+            newEducationInfos[index] = {
+                ...newEducationInfos[index],
+                [fieldName]: value as any,
+            };
+            setEducationInfos(newEducationInfos);
         }
 
     };
@@ -164,7 +165,7 @@ const EducationInfo = () => {
             ...prevEducationInfos,
             {
                 name: '',
-                school_gpa: 0,
+                school_gpa: null,  // Initialize as null
                 graduated_year: 0,
                 files: [],
                 filePaths: [],
@@ -191,26 +192,26 @@ const EducationInfo = () => {
     };
 
     const handleSubmit = () => {
-       // Form validation
-       for (let i = 0; i < educationInfos.length; i++) {
+        // Form validation
+        for (let i = 0; i < educationInfos.length; i++) {
             const info = educationInfos[i];
             if (!info.name) {
-                toast.error(`School Name is required for entry ${i + 1}`);
+                toast.error(`School name is required`);
                 return;
             }
-            if (info.school_gpa === null || info.school_gpa === undefined || isNaN(info.school_gpa) || info.school_gpa === 0) {
-                toast.error(`School GPA is required for entry ${i + 1}`);
+            if (info.school_gpa === null || info.school_gpa === undefined) {
+                toast.error(`School GPA is required`);
                 return;
             }
             if (!info.graduated_year) {
-                toast.error(`Graduation Year is required for entry ${i + 1}`);
+                toast.error(`Graduation Year is required`);
                 return;
             }
 
             if (!info.files || info.files.length === 0) {
-                 toast.error(`Certificate of graduation is required for entry ${i + 1}`);
-                 return;
-             }
+                toast.error(`Certificate of graduation is required`);
+                return;
+            }
         }
 
         // Save to sessionStorage and navigate
@@ -230,6 +231,7 @@ const EducationInfo = () => {
             const educationInfosWithYear = parsedData.map((educationInfo: any) => ({
                 ...educationInfo,
                 graduated_year: educationInfo.graduated_year ? parseInt(educationInfo.graduated_year, 10) : 0,
+                school_gpa: educationInfo.school_gpa !== null ? parseFloat(educationInfo.school_gpa) : null, // Handle null value
             }));
             setEducationInfos(educationInfosWithYear);
         }
@@ -271,9 +273,10 @@ const EducationInfo = () => {
                             <Space>
                                 <Input
                                     type="number"
-                                    placeholder="Enter School GPA"
+                                    placeholder={educationInfo.school_gpa === null ? "Enter School GPA" : ""}  // Conditional placeholder
                                     className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                                    value={educationInfo.school_gpa?.toString() || ""}
+                                    // Display the value as a string for the input
+                                    value={educationInfo.school_gpa === null ? "" : educationInfo.school_gpa?.toString()} // Handle null value
                                     onChange={(e) => handleSchoolGpaChange(index, e)}
                                     max={5}
                                     step="0.1"
@@ -304,22 +307,22 @@ const EducationInfo = () => {
                             </label>
                             <Space>
                                 <div className="flex items-center justify-center space-x-2">
-                                     <Button
-                                            onClick={() => {
-                                                if (selectedFiles[index]) {
-                                                    deleteFile(index);
-                                                } else {
-                                                    handlePlusClick(index);
-                                                }
-                                            }}
-                                            type="text"
-                                            className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
-                                        >
-                                            {selectedFiles[index]
-                                                ? selectedFiles[index]!.name
-                                                : "Attach document"}
-                                            {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
-                                        </Button>
+                                    <Button
+                                        onClick={() => {
+                                            if (selectedFiles[index]) {
+                                                deleteFile(index);
+                                            } else {
+                                                handlePlusClick(index);
+                                            }
+                                        }}
+                                        type="text"
+                                        className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
+                                    >
+                                        {selectedFiles[index]
+                                            ? selectedFiles[index]!.name
+                                            : "Attach document"}
+                                        {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                    </Button>
 
                                     <input
                                         type="file"
@@ -367,7 +370,7 @@ const EducationInfo = () => {
                     </Link>
 
                     <button
-                       
+
                         onClick={handleSubmit}
                         className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
 
@@ -378,7 +381,7 @@ const EducationInfo = () => {
             </Space>
             {isFileUploadLoading && <div>File is uploading...</div>}
             {/* react-hot-toast container */}
-           
+
         </div>
     );
 };

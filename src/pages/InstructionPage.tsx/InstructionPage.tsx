@@ -23,10 +23,7 @@ const InstructionPage: React.FC = () => {
     const handleStartClick = () => {
         if (isAgreed) {
             if (!isLoggedIn) {
-             
                 openLoginModal();
-
-                
             } else {
                 navigate('/infos/degree-information');
             }
@@ -40,7 +37,11 @@ const InstructionPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="min-h-[800px] flex items-center justify-center"><LoadingIndicator /></div>;
+        return (
+            <div className="min-h-[800px] flex items-center justify-center">
+                <LoadingIndicator />
+            </div>
+        );
     }
 
     if (isError || !data || !data.results || data.results.length === 0) {
@@ -49,26 +50,28 @@ const InstructionPage: React.FC = () => {
 
     const firstDocument = data.results[0];
     const year = firstDocument?.year;
-    const maddeler = firstDocument?.description?.split("\r\n") || [];
+    const maddeler = firstDocument?.description?.split('\r\n') || [];
 
     return (
-        <div className="container mx-auto mt-14 p-4 min-h-screen">
+        <div className="container mx-auto mt-14 p-4 ">  {/*Removed center related classes*/}
             <div className="text-center mb-10">
-                <h1 className='text-primaryText text-[18px] font-[400]'>
-                    TURKMENISTANYN OGUZ HAN ADYNDAKY INZENER TEHNOLOGIYALAR UNIWERSITETI <br /> {year}- {year ? parseInt(year) + 1 : 'YYYY'} YYL
+                <h1 className="text-primaryText text-[18px] font-[400]">
+                    TURKMENISTANYN OGUZ HAN ADYNDAKY INZENER TEHNOLOGIYALAR UNIWERSITETI <br /> {year}-{' '}
+                    {year ? parseInt(year) + 1 : 'YYYY'} YYL
                 </h1>
             </div>
 
             <h1 className="text-[#5D87FF] text-md mb-5 w-[500px]">Description</h1>
-            <div className='px-2'>
+            <div className="px-2">
                 <h1 className="text-primaryText text-[18px]  font-[500] mb-2">
                     Sed at diam elit. Vivamus tortor odio, pellentesque eu tincidunt a,
                     aliquet sit amet lorem pellentesque eu tincidunt a, aliquet sit amet
                     lorem.
                 </h1>
                 <p className="">
-                    Cras eget elit semper, congue sapien id, pellentesque diam. Nulla faucibus diam nec fermentum ullamcorper. Praesent sed ipsum ut augue vestibulum malesuada. Duis vitae volutpat odio. Integer sit amet elit ac justo sagittis dignissim.
-
+                    Cras eget elit semper, congue sapien id, pellentesque diam. Nulla faucibus diam nec fermentum ullamcorper.
+                    Praesent sed ipsum ut augue vestibulum malesuada. Duis vitae volutpat odio. Integer sit amet elit ac justo
+                    sagittis dignissim.
                 </p>
             </div>
 
@@ -79,7 +82,7 @@ const InstructionPage: React.FC = () => {
                     </li>
                 ))}
             </ul>
-            <div className='flex justify-between items-center mt-5'>
+            <div className="flex justify-between items-center mt-5">
                 <div className=" flex items-center ">
                     <input
                         type="checkbox"
@@ -94,15 +97,17 @@ const InstructionPage: React.FC = () => {
                 <div className="mt-4 text-right">
                     <button
                         onClick={handleStartClick}
-                        className={` py-2 px-4 rounded ${isAgreed ? 'bg-[#5D87FF] text-white hover:bg-[#3a5cc9]' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+                        className={` py-2 px-4 rounded ${
+                            isAgreed
+                                ? 'bg-[#5D87FF] text-white hover:bg-[#3a5cc9]'
+                                : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        }`}
                         disabled={!isAgreed}
                     >
                         Start
                     </button>
                 </div>
             </div>
-
-
         </div>
     );
 };

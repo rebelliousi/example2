@@ -83,7 +83,7 @@ const GeneralInformationForm = () => {
             toast.error('Father\'s Name is required.');
             return;
         }
-        if (formData.gender === null) { // Use === null for checking null or undefined
+        if (formData.gender === null) {
             toast.error('Gender is required.');
             return;
         }
@@ -95,7 +95,7 @@ const GeneralInformationForm = () => {
             toast.error('Date of Birth is required.');
             return;
         }
-        if (formData.area === null) {  // Use === null for checking null or undefined
+        if (formData.area === null) {
             toast.error('Area is required.');
             return;
         }
@@ -109,22 +109,21 @@ const GeneralInformationForm = () => {
         }
 
         // Phone Number Validation
-        const homePhoneRegex = /^\+993\d{7}$/; // +993 den sonra 7 rakam
-        const cellPhoneRegex = /^\+993\d{8}$/; // +993 den sonra 8 rakam
-
-        if (!formData.home_phone) {
-            toast.error('Home Phone Number is required.');
-            return;
-        } else if (!homePhoneRegex.test(formData.home_phone)) {
-            toast.error('Home Phone Number must start with +993 and contain exactly 7 digits.');
-            return;
-        }
-
+        const cellPhoneRegex = /^\+993\d{8}$/;
         if (!formData.phone) {
             toast.error('Cellphone Number is required.');
             return;
         } else if (!cellPhoneRegex.test(formData.phone)) {
             toast.error('Cellphone Number must start with +993 and contain exactly 8 digits.');
+            return;
+        }
+
+        // Home Phone Validation
+        if (!formData.home_phone) {
+            toast.error('Home Phone Number is required.');
+            return;
+        } else if (formData.home_phone.length < 5 || formData.home_phone.length > 6) {
+            toast.error('Home Phone Number must be between 5 and 6 digits.');
             return;
         }
 
@@ -166,7 +165,6 @@ const GeneralInformationForm = () => {
                     storedGeneralInformation
                 );
 
-                // Validate and reformat the date when loading from storage
                 if (parsedData.date_of_birth) {
                     const dateMoment = moment(parsedData.date_of_birth, "YYYY-MM-DD", true);
                     parsedData.date_of_birth = dateMoment.isValid()
@@ -202,7 +200,7 @@ const GeneralInformationForm = () => {
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                 value={formData.first_name}
                                 onChange={(e) => handleInputChange(e, "first_name")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -217,7 +215,7 @@ const GeneralInformationForm = () => {
                                 className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                 value={formData.last_name}
                                 onChange={(e) => handleInputChange(e, "last_name")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -232,7 +230,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.father_name}
                                 onChange={(e) => handleInputChange(e, "father_name")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -263,7 +261,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.nationality}
                                 onChange={(e) => handleInputChange(e, "nationality")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -282,7 +280,7 @@ const GeneralInformationForm = () => {
                                 }
                                 onChange={handleDateChange}
                                 format="YYYY-MM-DD"
-                                required // Make the DatePicker required
+                                required
                             />
                         </Space>
                     </div>
@@ -320,7 +318,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.address}
                                 onChange={(e) => handleInputChange(e, "address")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -335,7 +333,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.place_of_birth}
                                 onChange={(e) => handleInputChange(e, "place_of_birth")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>
@@ -389,7 +387,7 @@ const GeneralInformationForm = () => {
                                 className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px]"
                                 value={formData.email}
                                 onChange={(e) => handleInputChange(e, "email")}
-                                required // Make the input required
+                                required
                             />
                         </Space>
                     </div>

@@ -31,16 +31,18 @@ interface AwardInfo {
     description: string | null;
     files: any[];
     filePaths: string[];
+    selectedFile: File | null; // Dosya bilgisini tutmak için eklendi
 }
 
 const AwardsInfo = () => {
     const navigate = useNavigate();
 
     const [awardInfos, setAwardInfos] = useState<AwardInfo[]>([{
-        type: null,  // Changed to null, was OlympicType.AREA
+        type: null,
         description: '',
         files: [],
         filePaths: [],
+        selectedFile: null // Başlangıçta dosya yok
     }]);
 
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -77,6 +79,7 @@ const AwardsInfo = () => {
                     const updatedAwardInfos = [...awardInfos];
                     updatedAwardInfos[index].files.push(data.id);
                     updatedAwardInfos[index].filePaths.push(data.path);
+                    updatedAwardInfos[index].selectedFile = file; // Seçilen dosyayı state'e kaydet
                     setAwardInfos(updatedAwardInfos);
 
                     toast.success('File uploaded successfully');
@@ -100,16 +103,25 @@ const AwardsInfo = () => {
             ...awardInfos,
             {
                 type: null,
-                description: '',  // Changed to ''
+                description: '',
                 files: [],
                 filePaths: [],
+                selectedFile: null  // Dosya yok
             },
         ]);
     };
 
-    const handleDeleteEducationInfo = (index: number) => {
+    const handleDeleteAwardInfo = (index: number) => {
         const updatedAwardInfos = [...awardInfos];
         updatedAwardInfos.splice(index, 1);
+        setAwardInfos(updatedAwardInfos);
+    };
+
+    const deleteFile = (index: number) => {
+        const updatedAwardInfos = [...awardInfos];
+        updatedAwardInfos[index].files = []; // Dosya ID'lerini temizle
+        updatedAwardInfos[index].filePaths = []; // Dosya yollarını temizle
+        updatedAwardInfos[index].selectedFile = null; // Seçili dosyayı temizle
         setAwardInfos(updatedAwardInfos);
     };
 
@@ -118,17 +130,17 @@ const AwardsInfo = () => {
             const info = awardInfos[i];
 
             if (!info.type) {
-                toast.error(`Please select an award type for entry ${i + 1}.`);
+                toast.error(`Please select an award type .`);
                 return;
             }
 
             if (!info.description) {
-                toast.error(`Please enter a description for entry ${i + 1}.`);
+                toast.error(`Please enter a description .`);
                 return;
             }
 
             if (info.files.length === 0) {
-                toast.error(`Please upload a certificate for entry ${i + 1}.`);
+                toast.error(`Please upload a certificate.`);
                 return;
             }
         }
@@ -146,9 +158,10 @@ const AwardsInfo = () => {
                 // Tip güvenliğini sağla
                 const typedData: AwardInfo[] = parsedData.map((item: any) => ({
                     type: item.type as OlympicTypeValue | null,
-                    description: item.description || '',  // Changed to ''
+                    description: item.description || '',
                     files: item.files || [],
                     filePaths: item.filePaths ? (item.filePaths as string[]) : [],
+                    selectedFile: null // LocalStorage'dan dosya yüklenemeyeceği için null olarak ayarlanır
                 }));
 
                 setAwardInfos(typedData);
@@ -157,9 +170,10 @@ const AwardsInfo = () => {
                 setAwardInfos([
                     {
                         type: null,
-                        description: '',  // Changed to ''
+                        description: '',
                         files: [],
                         filePaths: [],
+                        selectedFile: null
                     },
                 ]);
             }
@@ -193,7 +207,7 @@ const AwardsInfo = () => {
                                         className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                         value={awardInfo.type || undefined}
                                         onChange={(value) => handleAwardTypeChange(index, value as OlympicTypeValue)}
-                                      
+
                                     >
                                         {Object.entries(OlympicType).map(([key, value]) => (
                                             <Select.Option key={key} value={value as OlympicTypeValue}>
@@ -224,14 +238,20 @@ const AwardsInfo = () => {
                                 <Space>
                                     <div className="flex items-center justify-center space-x-2">
                                         <Button
-                                            onClick={() => handlePlusClick(index)}
+                                            onClick={() => {
+                                                if (awardInfo.selectedFile) {
+                                                    deleteFile(index);
+                                                } else {
+                                                    handlePlusClick(index);
+                                                }
+                                            }}
                                             type="text"
                                             className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
                                         >
-                                            {awardInfo.filePaths.length > 0
-                                                ? awardInfo.filePaths[0]
+                                            {awardInfo.selectedFile
+                                                ? awardInfo.selectedFile.name
                                                 : "Attach document"}
-                                            <PlusIcon />
+                                            {awardInfo.selectedFile ? <TrashIcon /> : <PlusIcon />}
                                         </Button>
                                         <input
                                             type="file"
@@ -239,7 +259,7 @@ const AwardsInfo = () => {
                                             onChange={(e) => handleFileChange(index, e)}
                                             ref={(el) => setFileInputRef(index, el)}
                                             accept="image/*,application/pdf"
-                                            required // Added required attribute - Needs programmatic handling
+                                            required
                                         />
                                         <InfoCircleIcon className="text-blue-500 hover:text-blue-700" />
                                     </div>
@@ -248,7 +268,7 @@ const AwardsInfo = () => {
 
                             {awardInfos.length > 1 && (
                                 <button
-                                    onClick={() => handleDeleteEducationInfo(index)}
+                                    onClick={() => handleDeleteAwardInfo(index)}
                                     className="px-8 py-2 flex items-center justify-center gap-2 border-[#FA896B] border text-[#FA896B] rounded hover:text-[#FA896B] hover:border-[#FA896B] w-[200px]"
                                 >
                                     Delete info

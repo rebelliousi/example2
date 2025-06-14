@@ -13,7 +13,9 @@ export type DocumentType =
   | 'description'
   | 'terjiimehal'
   | 'labor_book'
-  | 'Dushundirish';
+  | 'Dushundirish'
+    'nika_haty'
+    'death_certificate'
 
 export interface GuardianDocument {
   type: Exclude<DocumentType, 'school_certificate' | 'information'>;

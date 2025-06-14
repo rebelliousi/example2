@@ -77,8 +77,8 @@ const DegreeInformationForm = () => {
 
         sessionStorage.setItem('degreeInformation', JSON.stringify(degreeInformation));
 
-        console.log("Degree Information:", degreeInformation);
-        toast.success("Degree information saved. Proceeding to the next page.");
+      
+        // toast.success("Degree information saved. Proceeding to the next page.");
 
         navigate('/infos/general-information');
     };

@@ -35,8 +35,21 @@ const RequiredDocuments: React.FC = () => {
     const conditions = firstDocument?.text?.split("\r\n") || [];
     const year = firstDocument?.year;
 
+    // Function to generate download links
+    const getAttachmentDownloadLinks = (): string[] => {
+        if (!firstDocument?.attachments || firstDocument.attachments.length === 0) {
+            return [];
+        }
+
+        // Assuming attachments are just IDs and the API provides an endpoint to fetch the file
+        // You'll likely need to adapt this based on your actual API.
+        return firstDocument.attachments.map(attachmentId => `/api/download/attachment/${attachmentId}`); // Replace with your actual download endpoint
+    };
+
+    const attachmentDownloadLinks = getAttachmentDownloadLinks();
+
     return (
-        <div className="min-h-screen">
+        <div className="">
             <div className="container mx-auto mt-20 p-4">
                 <div className="text-center mb-10">
                     <h1 className="text-primaryText text-[18px] font-[400]">
@@ -71,9 +84,20 @@ const RequiredDocuments: React.FC = () => {
                 </ul>
 
                 <div className="mt-4 flex space-x-2 items-center ">
-                    <a href="#" className="text-[#4570EA] hover:underline">
-                        Download list of required documents
-                    </a>
+                    {attachmentDownloadLinks.length > 0 ? (
+                        attachmentDownloadLinks.map((link, index) => (
+                            <a
+                                key={index}
+                                href={link}
+                                className="text-[#4570EA] hover:underline"
+                                download // Add the download attribute if it is a direct file URL
+                            >
+                                Download List of Required Documents {attachmentDownloadLinks.length > 1 ? `(Part ${index + 1})` : ''}
+                            </a>
+                        ))
+                    ) : (
+                        <span className="text-gray-500">No documents available for download.</span>
+                    )}
                     <DownloadIcon />
                 </div>
 
