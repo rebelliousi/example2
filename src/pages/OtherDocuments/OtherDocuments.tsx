@@ -1,6 +1,6 @@
-import { Space, Button, message } from "antd";
+import React, { useState, useRef, useEffect } from 'react';
+import { Space, Button, message, Spin } from "antd";
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
-import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PlusIcon from "../../assets/icons/PlusIcon";
 import TrashIcon from "../../assets/icons/TrashIcon"; // Import TrashIcon
@@ -32,6 +32,7 @@ interface FileState {
     type: DocumentType;
     file: File | null;
     filePaths: string[];
+    isUploading: boolean; // Yükleme durumunu takip etmek için
 }
 
 interface FileIdsState {
@@ -59,9 +60,9 @@ interface IClient {
 const OtherDocuments = () => {
     const navigate = useNavigate();
     const { mutate: addClient, isPending: isAddingClient } = useAddClient();
-    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles();
+    const { mutate: uploadFile } = useSendFiles();
 
-    const [files, setFiles] = useState<{ [key in FileFieldName]?: File | null }>({});
+    const [files, setFiles] = useState<{ [key in FileFieldName]?: FileState }>({});
     const [fileIds, setFileIds] = useState<FileIdsState>({});
 
     const fileInputRefs = useRef<{
@@ -84,11 +85,27 @@ const OtherDocuments = () => {
             uploadFile(formData, {
                 onSuccess: (data: any) => {
                     setFileIds(prev => ({ ...prev, [fieldName]: data.id }));
+                    setFiles(prev => {
+                        const updatedFiles = { ...prev };
+                        if (updatedFiles[fieldName]) {
+                            updatedFiles[fieldName]!.isUploading = false;
+                        }
+                        return updatedFiles;
+                    });
                     resolve(data.id);
                 },
                 onError: (error: any) => {
                     console.error('File upload failed', error);
                     toast.error('File upload failed');
+                    setFiles(prev => {
+                        const updatedFiles = { ...prev };
+                        delete updatedFiles[fieldName];
+                        return updatedFiles;
+                    });
+                    setFileIds(prev => {
+                        const { [fieldName]: deleted, ...rest } = prev;
+                        return rest;
+                    });
                     reject(error);
                 },
             });
@@ -101,13 +118,29 @@ const OtherDocuments = () => {
     ) => {
         const file = e.target.files?.[0];
         if (file) {
-            setFiles(prev => ({ ...prev, [fieldName]: file }));
+            setFiles(prev => ({
+                ...prev,
+                [fieldName]: {
+                    type: mapFileFieldToDocumentType(fieldName),
+                    file: file,
+                    filePaths: [],
+                    isUploading: true
+                }
+            }));
             try {
                 const fileId = await uploadDocument(fieldName, file);
                 setFileIds(prev => ({ ...prev, [fieldName]: fileId }));
             } catch (error) {
                 console.error("Something went wrong:", error);
-                setFiles(prev => ({ ...prev, [fieldName]: null })); // Dosya yüklenemezse state'i temizle
+                setFiles(prev => {
+                    const updatedFiles = { ...prev };
+                    delete updatedFiles[fieldName];
+                    return updatedFiles;
+                });
+                setFileIds(prev => {
+                    const { [fieldName]: deleted, ...rest } = prev;
+                    return rest;
+                });
             }
         }
     };
@@ -118,8 +151,11 @@ const OtherDocuments = () => {
 
     //Silme işlemini yönetecek fonksiyon
     const handleDeleteFile = (fieldName: FileFieldName) => {
-        setFiles(prev => ({ ...prev, [fieldName]: null })); //Dosyayı temizle
-        setFileIds(prev => { // FileIds'i temizle
+        setFiles(prev => {
+            const { [fieldName]: deleted, ...rest } = prev;
+            return rest;
+        });
+        setFileIds(prev => {
             const { [fieldName]: deleted, ...rest } = prev;
             return rest;
         });
@@ -222,6 +258,27 @@ const OtherDocuments = () => {
         }
     };
 
+    const mapFileFieldToDocumentType = (fieldName: FileFieldName): DocumentType => {
+        switch (fieldName) {
+            case "saglykKepilnama":
+                return DocumentType.MEDICAL_RECORD;
+            case "threeArka":
+                return DocumentType.RELATIONSHIP_TREE;
+            case "maglumat":
+                return DocumentType.INFORMATION;
+            case "terjimehal":
+                return DocumentType.TERJIMEHAL;
+            case "threeXFourSurat":
+                return DocumentType.INFORMATION;
+            case "militaryService":
+                return DocumentType.MILITARY_DOCUMENT;
+            case "nikaHaty":
+                return DocumentType.NIKA_HATY;
+            default:
+                throw new Error(`Unknown field name: ${fieldName}`);
+        }
+    };
+
     return (
         <div className="pt-10 px-4 pb-10">
             <Space direction="vertical" size="middle" className="w-full">
@@ -234,7 +291,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="Saglyk kepilnama"
                     fieldName="saglykKepilnama"
-                    file={files.saglykKepilnama}
+                    file={files.saglykKepilnama?.file}
+                    isUploading={files.saglykKepilnama?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.saglykKepilnama = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -245,7 +303,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="3 arka"
                     fieldName="threeArka"
-                    file={files.threeArka}
+                    file={files.threeArka?.file}
+                    isUploading={files.threeArka?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.threeArka = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -256,7 +315,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="Maglumat"
                     fieldName="maglumat"
-                    file={files.maglumat}
+                    file={files.maglumat?.file}
+                    isUploading={files.maglumat?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.maglumat = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -267,7 +327,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="Terjimehal"
                     fieldName="terjimehal"
-                    file={files.terjimehal}
+                    file={files.terjimehal?.file}
+                    isUploading={files.terjimehal?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.terjimehal = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -278,7 +339,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="3X4 surat"
                     fieldName="threeXFourSurat"
-                    file={files.threeXFourSurat}
+                    file={files.threeXFourSurat?.file}
+                    isUploading={files.threeXFourSurat?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.threeXFourSurat = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -289,7 +351,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="Military service"
                     fieldName="militaryService"
-                    file={files.militaryService}
+                    file={files.militaryService?.file}
+                    isUploading={files.militaryService?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.militaryService = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -300,7 +363,8 @@ const OtherDocuments = () => {
                 <DocumentUpload
                     label="Nika haty"
                     fieldName="nikaHaty"
-                    file={files.nikaHaty}
+                    file={files.nikaHaty?.file}
+                    isUploading={files.nikaHaty?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.nikaHaty = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
@@ -319,10 +383,9 @@ const OtherDocuments = () => {
                     <button
                         onClick={handleSubmit}
                         className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
-                        disabled={isAddingClient || isFileUploadLoading}
+                        disabled={isAddingClient}
                     >
                         {isAddingClient ? "Submitting..." : "Finish"}
-                        {isFileUploadLoading && " (Uploading...)"}
                     </button>
                 </div>
             </Space>
@@ -334,6 +397,7 @@ interface DocumentUploadProps {
     label: string;
     fieldName: FileFieldName;
     file?: File | null;
+    isUploading?: boolean;
     fileInputRef: (el: HTMLInputElement | null) => void;
     onFileChange: (fieldName: FileFieldName, e: React.ChangeEvent<HTMLInputElement>) => void;
     onPlusClick: (fieldName: FileFieldName) => void;
@@ -345,6 +409,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     label,
     fieldName,
     file,
+    isUploading,
     fileInputRef,
     onFileChange,
     onPlusClick,
@@ -367,8 +432,14 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                         type="text"
                         className="cursor-pointer hover:bg-hoverBgFile bg-bgFile border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
                     >
-                        {file ? file.name : "Attach document"}
-                        {file ? <TrashIcon /> : <PlusIcon />} {/* İkonu değiştir */}
+                        {isUploading ? (
+                            <Spin size="small" />
+                        ) : (
+                            <div className="flex items-center justify-center w-full gap-1">
+                                {file ? file.name : "Attach document"}
+                                {file ? <TrashIcon /> : <PlusIcon style={{ fontSize: '16px' }} />}
+                            </div>
+                        )}
                     </Button>
 
                     <input

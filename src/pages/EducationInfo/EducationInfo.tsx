@@ -1,4 +1,4 @@
-import { Input, Space, Button, DatePicker, message } from "antd";
+import { Input, Space, Button, DatePicker, message, Spin } from "antd";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Moment } from "moment";
@@ -7,19 +7,18 @@ import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
 import TrashIcon from "../../assets/icons/TrashIcon";
 import moment from 'moment';
 import { useSendFiles } from '../../hooks/Client/useSendFIles';
-import toast from 'react-hot-toast';  // Import toast
-
+import toast from 'react-hot-toast';
 
 interface EducationInformation {
     name: string;
-    school_gpa: number | null; // Make school_gpa nullable
+    school_gpa: number | null;
     graduated_year: number;
     files: string[];
     filePaths: string[];
+    isUploading: boolean;
 }
 
 type EducationInformationKey = keyof EducationInformation;
-
 
 const EducationInfo = () => {
     const navigate = useNavigate();
@@ -27,10 +26,11 @@ const EducationInfo = () => {
     const [educationInfos, setEducationInfos] = useState<EducationInformation[]>([
         {
             name: '',
-            school_gpa: null, // Initialize as null
+            school_gpa: null,
             graduated_year: 0,
             files: [],
             filePaths: [],
+            isUploading: false,
         },
     ]);
 
@@ -41,7 +41,7 @@ const EducationInfo = () => {
         fileInputRefs.current = Array(educationInfos.length).fill(null);
     }, [educationInfos.length]);
 
-    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles();
+    const { mutate: uploadFile } = useSendFiles();
 
     const handleInputChange = (
         index: number,
@@ -56,8 +56,7 @@ const EducationInfo = () => {
                 return;
             }
 
-            // Parse the value as a number immediately
-            const parsedValue = value === '' ? null : Number(value); // Parse to null if empty
+            const parsedValue = value === '' ? null : Number(value);
 
             if (parsedValue !== null && parsedValue > 5) {
                 return;
@@ -98,7 +97,6 @@ const EducationInfo = () => {
         setEducationInfos(newEducationInfos);
     };
 
-
     const deleteFile = (index: number) => {
         setSelectedFiles((prevSelectedFiles) => {
             const newSelectedFiles = [...prevSelectedFiles];
@@ -112,6 +110,7 @@ const EducationInfo = () => {
                 ...newEducationInfos[index],
                 files: [],
                 filePaths: [],
+                isUploading: false,
             };
             return newEducationInfos;
         });
@@ -132,23 +131,43 @@ const EducationInfo = () => {
         });
 
         if (file) {
+            setEducationInfos((prevEducationInfos) => {
+                const newEducationInfos = [...prevEducationInfos];
+                newEducationInfos[index] = {
+                    ...newEducationInfos[index],
+                    isUploading: true,
+                };
+                return newEducationInfos;
+            });
+
             const formData = new FormData();
             formData.append('path', file);
 
             uploadFile(formData, {
                 onSuccess: (data: any) => {
-                    const newEducationInfos = [...educationInfos];
-                    newEducationInfos[index] = {
-                        ...newEducationInfos[index],
-                        files: [...newEducationInfos[index].files, data.id],
-                        filePaths: [...newEducationInfos[index].filePaths, data.path],
-                    };
-                    setEducationInfos(newEducationInfos);
+                    setEducationInfos((prevEducationInfos) => {
+                        const newEducationInfos = [...prevEducationInfos];
+                        newEducationInfos[index] = {
+                            ...newEducationInfos[index],
+                            files: [...newEducationInfos[index].files, data.id],
+                            filePaths: [...newEducationInfos[index].filePaths, data.path],
+                            isUploading: false,
+                        };
+                        return newEducationInfos;
+                    });
                     message.success('File uploaded successfully');
                 },
                 onError: (error: any) => {
                     console.error('File upload failed', error);
                     message.error('File upload failed');
+                    setEducationInfos((prevEducationInfos) => {
+                        const newEducationInfos = [...prevEducationInfos];
+                        newEducationInfos[index] = {
+                            ...newEducationInfos[index],
+                            isUploading: false,
+                        };
+                        return newEducationInfos;
+                    });
                 },
             });
         }
@@ -165,10 +184,11 @@ const EducationInfo = () => {
             ...prevEducationInfos,
             {
                 name: '',
-                school_gpa: null,  // Initialize as null
+                school_gpa: null,
                 graduated_year: 0,
                 files: [],
                 filePaths: [],
+                isUploading: false,
             },
         ]);
 
@@ -231,7 +251,8 @@ const EducationInfo = () => {
             const educationInfosWithYear = parsedData.map((educationInfo: any) => ({
                 ...educationInfo,
                 graduated_year: educationInfo.graduated_year ? parseInt(educationInfo.graduated_year, 10) : 0,
-                school_gpa: educationInfo.school_gpa !== null ? parseFloat(educationInfo.school_gpa) : null, // Handle null value
+                school_gpa: educationInfo.school_gpa !== null ? parseFloat(educationInfo.school_gpa) : null,
+                isUploading: false,
             }));
             setEducationInfos(educationInfosWithYear);
         }
@@ -261,7 +282,7 @@ const EducationInfo = () => {
                                     className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
                                     value={educationInfo.name || ""}
                                     onChange={(e) => handleNameChange(index, e)}
-                                    required  // Added required
+                                    required
                                 />
                             </Space>
                         </div>
@@ -273,14 +294,13 @@ const EducationInfo = () => {
                             <Space>
                                 <Input
                                     type="number"
-                                    placeholder={educationInfo.school_gpa === null ? "Enter School GPA" : ""}  // Conditional placeholder
+                                    placeholder={educationInfo.school_gpa === null ? "Enter School GPA" : ""}
                                     className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px]"
-                                    // Display the value as a string for the input
-                                    value={educationInfo.school_gpa === null ? "" : educationInfo.school_gpa?.toString()} // Handle null value
+                                    value={educationInfo.school_gpa === null ? "" : educationInfo.school_gpa?.toString()}
                                     onChange={(e) => handleSchoolGpaChange(index, e)}
                                     max={5}
                                     step="0.1"
-                                    required // Added required
+                                    required
                                 />
                             </Space>
                         </div>
@@ -296,7 +316,7 @@ const EducationInfo = () => {
                                     value={educationInfo.graduated_year ? moment(educationInfo.graduated_year.toString(), 'YYYY') : null}
                                     onChange={(date) => handleGraduatedYearChange(index, date)}
                                     placeholder="Select Year"
-                                    required // Added required
+                                    required
                                 />
                             </Space>
                         </div>
@@ -318,10 +338,16 @@ const EducationInfo = () => {
                                         type="text"
                                         className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
                                     >
-                                        {selectedFiles[index]
-                                            ? selectedFiles[index]!.name
-                                            : "Attach document"}
-                                        {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                        {educationInfo.isUploading ? (
+                                            <Spin size="small" />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full gap-1">
+                                                {selectedFiles[index]
+                                                    ? selectedFiles[index]!.name
+                                                    : "Attach document"}
+                                                {selectedFiles[index] ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px' }} />}
+                                            </div>
+                                        )}
                                     </Button>
 
                                     <input
@@ -379,8 +405,6 @@ const EducationInfo = () => {
                     </button>
                 </div>
             </Space>
-            {isFileUploadLoading && <div>File is uploading...</div>}
-            {/* react-hot-toast container */}
 
         </div>
     );

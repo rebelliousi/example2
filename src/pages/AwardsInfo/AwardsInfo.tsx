@@ -1,4 +1,4 @@
-import { Input, Space, Button, message, Select } from "antd";
+import { Input, Space, Button, message, Select, Spin } from "antd";
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,7 +31,8 @@ interface AwardInfo {
     description: string | null;
     files: any[];
     filePaths: string[];
-    selectedFile: File | null; // Dosya bilgisini tutmak için eklendi
+    selectedFile: File | null;
+    isUploading: boolean;
 }
 
 const AwardsInfo = () => {
@@ -42,7 +43,8 @@ const AwardsInfo = () => {
         description: '',
         files: [],
         filePaths: [],
-        selectedFile: null // Başlangıçta dosya yok
+        selectedFile: null,
+        isUploading: false
     }]);
 
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -51,7 +53,7 @@ const AwardsInfo = () => {
         fileInputRefs.current = fileInputRefs.current.slice(0, awardInfos.length);
     }, [awardInfos.length]);
 
-    const { mutate: uploadFile, isPending: isFileUploadLoading } = useSendFiles();
+    const { mutate: uploadFile } = useSendFiles();
 
     const handleAwardTypeChange = (index: number, value: OlympicTypeValue | null) => {
         const updatedAwardInfos = [...awardInfos];
@@ -59,9 +61,13 @@ const AwardsInfo = () => {
         setAwardInfos(updatedAwardInfos);
     };
 
-    const handleAwardInfoChange = (index: number, fieldName: keyof AwardInfo, value: any) => {
+    const handleAwardInfoChange = (
+        index: number,
+        fieldName: keyof AwardInfo,
+        value: string | OlympicTypeValue | null
+    ) => {
         const updatedAwardInfos = [...awardInfos];
-        updatedAwardInfos[index][fieldName] = value;
+        updatedAwardInfos[index][fieldName] = value as never;
         setAwardInfos(updatedAwardInfos);
     };
 
@@ -70,6 +76,11 @@ const AwardsInfo = () => {
         const certificateType = CertificateType.PARTICIPATION; // Varsayılan belge türü
 
         if (file) {
+            // Yükleme başladığında durumu ayarla
+            const updatedAwardInfos = [...awardInfos];
+            updatedAwardInfos[index].isUploading = true;
+            setAwardInfos(updatedAwardInfos);
+
             const formData = new FormData();
             formData.append('path', file);
             formData.append('certificateType', certificateType);
@@ -79,7 +90,8 @@ const AwardsInfo = () => {
                     const updatedAwardInfos = [...awardInfos];
                     updatedAwardInfos[index].files.push(data.id);
                     updatedAwardInfos[index].filePaths.push(data.path);
-                    updatedAwardInfos[index].selectedFile = file; // Seçilen dosyayı state'e kaydet
+                    updatedAwardInfos[index].selectedFile = file;
+                    updatedAwardInfos[index].isUploading = false; // Yükleme bitti
                     setAwardInfos(updatedAwardInfos);
 
                     toast.success('File uploaded successfully');
@@ -87,6 +99,11 @@ const AwardsInfo = () => {
                 onError: (error: any) => {
                     console.error('File upload failed', error);
                     toast.error('File upload failed');
+
+                    // Hata durumunda da yükleme durumunu sıfırla
+                    const updatedAwardInfos = [...awardInfos];
+                    updatedAwardInfos[index].isUploading = false;
+                    setAwardInfos(updatedAwardInfos);
                 },
             });
         }
@@ -106,7 +123,8 @@ const AwardsInfo = () => {
                 description: '',
                 files: [],
                 filePaths: [],
-                selectedFile: null  // Dosya yok
+                selectedFile: null,
+                isUploading: false
             },
         ]);
     };
@@ -119,9 +137,10 @@ const AwardsInfo = () => {
 
     const deleteFile = (index: number) => {
         const updatedAwardInfos = [...awardInfos];
-        updatedAwardInfos[index].files = []; // Dosya ID'lerini temizle
-        updatedAwardInfos[index].filePaths = []; // Dosya yollarını temizle
-        updatedAwardInfos[index].selectedFile = null; // Seçili dosyayı temizle
+        updatedAwardInfos[index].files = [];
+        updatedAwardInfos[index].filePaths = [];
+        updatedAwardInfos[index].selectedFile = null;
+        updatedAwardInfos[index].isUploading = false;
         setAwardInfos(updatedAwardInfos);
     };
 
@@ -161,7 +180,8 @@ const AwardsInfo = () => {
                     description: item.description || '',
                     files: item.files || [],
                     filePaths: item.filePaths ? (item.filePaths as string[]) : [],
-                    selectedFile: null // LocalStorage'dan dosya yüklenemeyeceği için null olarak ayarlanır
+                    selectedFile: null,
+                    isUploading: false
                 }));
 
                 setAwardInfos(typedData);
@@ -173,7 +193,8 @@ const AwardsInfo = () => {
                         description: '',
                         files: [],
                         filePaths: [],
-                        selectedFile: null
+                        selectedFile: null,
+                        isUploading: false
                     },
                 ]);
             }
@@ -248,10 +269,16 @@ const AwardsInfo = () => {
                                             type="text"
                                             className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-[400px] h-[40px] flex items-center justify-center"
                                         >
-                                            {awardInfo.selectedFile
-                                                ? awardInfo.selectedFile.name
-                                                : "Attach document"}
-                                            {awardInfo.selectedFile ? <TrashIcon /> : <PlusIcon />}
+                                            {awardInfo.isUploading ? (
+                                                <Spin size="small" />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full gap-1">
+                                                    {awardInfo.selectedFile
+                                                        ? awardInfo.selectedFile.name
+                                                        : "Attach document"}
+                                                    {awardInfo.selectedFile ? <TrashIcon /> : <PlusIcon style={{ fontSize: '16px' }} />}
+                                                </div>
+                                            )}
                                         </Button>
                                         <input
                                             type="file"
@@ -305,7 +332,7 @@ const AwardsInfo = () => {
                     </button>
                 </div>
             </Space>
-            {isFileUploadLoading && <div>File is uploading...</div>}
+
         </div>
     );
 };

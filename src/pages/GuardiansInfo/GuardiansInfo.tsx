@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Select, DatePicker, Input, Space, Button } from 'antd';
+import { Select, DatePicker, Input, Space, Button, Spin } from 'antd';
 import 'antd';
 import moment from 'moment';
 import type { Moment } from "moment";
@@ -24,8 +24,10 @@ interface GuardianWithFiles {
     documents: { type: string; file: string; path: string }[];
     filePaths: string[];
     isDeceased?: boolean | null;
-    passportFile?: File | null; // Yeni alan: Pasaport dosyası
-    deathCertificateFile?: File | null; // Yeni alan: Ölüm belgesi dosyası
+    passportFile?: File | null;
+    deathCertificateFile?: File | null;
+    isPassportUploading: boolean;
+    isDeathCertificateUploading: boolean;
 }
 
 interface GuardianFormProps {
@@ -48,8 +50,10 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             documents: [],
             filePaths: [],
             isDeceased: null,
-            passportFile: null, // Başlangıçta null
-            deathCertificateFile: null // Başlangıçta null
+            passportFile: null,
+            deathCertificateFile: null,
+            isPassportUploading: false,
+            isDeathCertificateUploading: false
         },
         {
             relation: 'mother',
@@ -64,8 +68,10 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             documents: [],
             filePaths: [],
             isDeceased: null,
-            passportFile: null, // Başlangıçta null
-            deathCertificateFile: null // Başlangıçta null
+            passportFile: null,
+            deathCertificateFile: null,
+            isPassportUploading: false,
+            isDeathCertificateUploading: false
         },
     ],
     onGuardiansSubmit,
@@ -76,7 +82,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
     const deathCertificateInputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const {
         mutate: uploadFile,
-        isPending: isFileUploadLoading,
+        isPending: isFileUploadLoadingGlobal,
     } = useSendFiles();
 
     const navigate = useNavigate();
@@ -103,29 +109,37 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             return;
         }
 
+        setGuardians(prev => {
+            const newGuardians = [...prev];
+            if (isDeathCertificate) {
+                newGuardians[index].isDeathCertificateUploading = true;
+            } else {
+                newGuardians[index].isPassportUploading = true;
+            }
+            return newGuardians;
+        });
+
         const formData = new FormData();
         formData.append('path', file);
 
         uploadFile(formData, {
             onSuccess: (data: any) => {
-                // Store ONLY the file ID and path
                 setGuardians((prev) => {
                     const newGuardians = [...prev];
-                    //Clear older Documents to store only the new one
                     newGuardians[index].documents = [{
                         type: documentType,
-                        file: data.id, // Store only the ID
-                        path: data.path //Store only the Path
+                        file: data.id,
+                        path: data.path
                     }];
-                    newGuardians[index].filePaths = [data.path]; // Only store the ID and path.
+                    newGuardians[index].filePaths = [data.path];
 
-                    // Store the actual File object
                     if (isDeathCertificate) {
                         newGuardians[index].deathCertificateFile = file;
+                        newGuardians[index].isDeathCertificateUploading = false;
                     } else {
                         newGuardians[index].passportFile = file;
+                        newGuardians[index].isPassportUploading = false;
                     }
-
                     return newGuardians;
                 });
                 toast.success('File uploaded successfully');
@@ -133,6 +147,16 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             onError: (error: any) => {
                 console.error('File upload failed', error);
                 toast.error('File upload failed');
+
+                setGuardians(prev => {
+                    const newGuardians = [...prev];
+                    if (isDeathCertificate) {
+                        newGuardians[index].isDeathCertificateUploading = false;
+                    } else {
+                        newGuardians[index].isPassportUploading = false;
+                    }
+                    return newGuardians;
+                });
             },
         });
     };
@@ -140,14 +164,14 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
     const handleFileChange = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files && event.target.files[0];
         if (file) {
-            handleFileUpload(index, file, 'passport'); // Passport tipi burada belirtiliyor
+            handleFileUpload(index, file, 'passport');
         }
     };
 
     const handleDeathCertificateChange = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files && event.target.files[0];
         if (file) {
-            handleFileUpload(index, file, 'death_certificate', true); // Ölüm belgesi tipi burada belirtiliyor
+            handleFileUpload(index, file, 'death_certificate', true);
         }
     };
 
@@ -190,7 +214,9 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                 filePaths: [],
                 isDeceased: null,
                 passportFile: null,
-                deathCertificateFile: null
+                deathCertificateFile: null,
+                isPassportUploading: false,
+                isDeathCertificateUploading: false
             },
         ]));
     };
@@ -256,7 +282,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 
                 console.log("Estimated data size:", dataSize, "bytes");
 
-                sessionStorage.setItem('guardians', dataToStore); // Sadece guardians verisini kaydet
+                sessionStorage.setItem('guardians', dataToStore);
                 onGuardiansSubmit(guardians);
             } else {
                 throw new Error('Session storage is not available.');
@@ -295,7 +321,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             const newGuardians = [...prev];
             const guardianToUpdate = { ...newGuardians[index] };
 
-            guardianToUpdate.documents = [];//guardianToUpdate.documents.filter(doc => doc.file === null);
+            guardianToUpdate.documents = [];
             guardianToUpdate.filePaths = [];
 
             if (isDeathCertificate) {
@@ -343,7 +369,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                         <div className=" flex w-[400px]">
                             <Select
                                 placeholder="Choose one relation"
-                                value={guardian.relation || undefined} // Use undefined when relation is empty
+                                value={guardian.relation || undefined}
                                 onChange={(value) => handleGuardianChange(index, 'relation', value)}
                                 style={{ width: '100%', height: '40px' }}
 
@@ -525,19 +551,32 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                         <Button
                                             onClick={() => {
                                                 if (guardian.passportFile) {
-                                                    deleteFile(index); // Call delete file function on click of the trash icon
+                                                    deleteFile(index);
                                                 } else {
-                                                    handlePlusClick(index); // If there is no file, open the file selection
+                                                    handlePlusClick(index);
                                                 }
                                             }}
                                             type="text"
                                             className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
 
                                         >
-                                            {guardian.passportFile
-                                                ? guardian.passportFile.name
-                                                : "Attach Passport copy"}
-                                            {guardian.passportFile ? <TrashIcon className='w-5' /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                            {guardian.isPassportUploading ? (
+                                                <Spin size="small" />
+                                            ) : (
+                                                <>
+                                                    {guardian.passportFile ? (
+                                                        <div className="flex items-center justify-between w-full">
+                                                            <span>{guardian.passportFile.name}</span>
+                                                            <TrashIcon className='w-5' />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-center w-full gap-1">
+                                                            <span>Attach Passport copy</span>
+                                                            <PlusIcon style={{ fontSize: '16px' }} />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
                                         </Button>
                                         <input
                                             type="file"
@@ -558,7 +597,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 
                                         <button
 
-                                            onClick={() => removeItem(index)} // Call removeItem on click
+                                            onClick={() => removeItem(index)}
                                             className="px-8 py-2 flex items-center justify-center gap-2 border-[#FA896B] border text-[#FA896B] rounded hover:text-[#FA896B] hover:border-[#FA896B] w-[200px]"
                                         >
                                             Delete guardian
@@ -595,10 +634,23 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                                 className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
 
                                             >
-                                                {guardian.deathCertificateFile
-                                                    ? guardian.deathCertificateFile.name
-                                                    : "Attach Death Certificate copy"}
-                                                {guardian.deathCertificateFile ? <TrashIcon style={{ fontSize: '16px', marginLeft: '5px' }} /> : <PlusIcon style={{ fontSize: '16px', marginLeft: '5px' }} />}
+                                                {guardian.isDeathCertificateUploading ? (
+                                                    <Spin size="small" />
+                                                ) : (
+                                                    <>
+                                                        {guardian.deathCertificateFile ? (
+                                                            <div className="flex items-center justify-between w-full">
+                                                                <span>{guardian.deathCertificateFile.name}</span>
+                                                                <TrashIcon style={{ fontSize: '16px', marginLeft: '5px' }} />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-center w-full gap-1">
+                                                                <span>Attach Death Certificate copy</span>
+                                                                <PlusIcon style={{ fontSize: '16px' }} />
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
                                             </Button>
                                             <input
                                                 type="file"
@@ -632,13 +684,14 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                     const parsedGuardians = JSON.parse(storedGuardians) as GuardianWithFiles[];
                     setGuardians(parsedGuardians.map(guardian => ({
                         ...guardian,
-                        passportFile: null,  // Dosya nesneleri saklanamaz
-                        deathCertificateFile: null // Dosya nesneleri saklanamaz
+                        passportFile: null,
+                        deathCertificateFile: null,
+                        isPassportUploading: false,
+                        isDeathCertificateUploading: false
                     })));
 
                 } catch (error) {
                     console.error("Error parsing guardians from sessionStorage:", error);
-                    // Handle the error (e.g., display a message to the user)
                 }
             }
         }
@@ -690,11 +743,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
 
                     onClick={handleSubmit}
                     className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
+                    disabled={isFileUploadLoadingGlobal}
                 >
                     Next
                 </button>
             </div>
-            {isFileUploadLoading && <div>File is uploading...</div>}
         </div>
     );
 };
