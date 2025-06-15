@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useDocument } from "../../hooks/Documents/useDocuments";
 import DownloadIcon from "../../assets/icons/DownloadIcon";
-import LoadingIndicator from "../../components/Status/LoadingIndicator";
+import { Spin } from 'antd'; // Import Spin from Ant Design
+import 'antd'; // Import Ant Design's CSS
 import { useAuthStore } from '../../store/useAuthStore';
 import { useModalStore } from '../../store/loginModalStore';
 
@@ -14,7 +15,7 @@ const RequiredDocuments: React.FC = () => {
 
     useEffect(() => {
         if (!isLoggedIn) {
-            // Store the current path in localStorage
+       
             localStorage.setItem('redirectAfterLogin', location.pathname);
         }
     }, [isLoggedIn, location.pathname]);
@@ -22,7 +23,7 @@ const RequiredDocuments: React.FC = () => {
     if (isLoading) {
         return (
             <div className="min-h-[800px] flex items-center justify-center">
-                <LoadingIndicator />
+                <Spin size="large" /> 
             </div>
         );
     }

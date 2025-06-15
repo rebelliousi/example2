@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDocument } from '../../hooks/Documents/useDocuments';
 import { useAuthStore } from '../../store/useAuthStore';
-import LoadingIndicator from '../../components/Status/LoadingIndicator';
+import { Spin } from 'antd'; // Import Spin from Ant Design
+import 'antd'; 
 import { useModalStore } from '../../store/loginModalStore';
 
 const InstructionPage: React.FC = () => {
@@ -39,7 +40,7 @@ const InstructionPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="min-h-[800px] flex items-center justify-center">
-                <LoadingIndicator />
+                <Spin size="large" />
             </div>
         );
     }

@@ -25,7 +25,7 @@ enum DocumentType {
     MAGLUMAT = "information",
     THREE_X_FOUR_SURAT = "information", // Updated
     MILITARY_SERVICE = "military_document",
-    NIKA_HATY = "nika_haty",
+    NIKA_HATY = "nika_haty", // VERY IMPORTANT: MUST MATCH BACKEND EXACTLY
 }
 
 interface FileState {
@@ -64,6 +64,7 @@ const OtherDocuments = () => {
 
     const [files, setFiles] = useState<{ [key in FileFieldName]?: FileState }>({});
     const [fileIds, setFileIds] = useState<FileIdsState>({});
+    const [gender, setGender] = useState<string | null>(null); // State to hold gender
 
     const fileInputRefs = useRef<{
         [key in FileFieldName]: HTMLInputElement | null;
@@ -84,6 +85,7 @@ const OtherDocuments = () => {
 
             uploadFile(formData, {
                 onSuccess: (data: any) => {
+                    console.log(`File uploaded successfully for ${fieldName}:`, data.id); // DEBUG
                     setFileIds(prev => ({ ...prev, [fieldName]: data.id }));
                     setFiles(prev => {
                         const updatedFiles = { ...prev };
@@ -95,7 +97,7 @@ const OtherDocuments = () => {
                     resolve(data.id);
                 },
                 onError: (error: any) => {
-                    console.error('File upload failed', error);
+                    console.error(`File upload failed for ${fieldName}:`, error);
                     toast.error('File upload failed');
                     setFiles(prev => {
                         const updatedFiles = { ...prev };
@@ -163,7 +165,11 @@ const OtherDocuments = () => {
 
     const handleSubmit = async () => {
         // Validation: Ensure required files are uploaded (except Nika Haty)
-        const requiredFields: FileFieldName[] = ["saglykKepilnama", "threeArka", "maglumat", "terjimehal", "threeXFourSurat", "militaryService",];
+        const requiredFields: FileFieldName[] = ["saglykKepilnama", "threeArka", "maglumat", "terjimehal", "threeXFourSurat",];
+        if (gender !== 'female') {
+            requiredFields.push("militaryService"); //Add to required fields only if NOT female.
+        }
+
         for (const field of requiredFields) {
             if (!fileIds[field]) {
                 toast.error(`Please upload ${field}`);
@@ -205,13 +211,12 @@ const OtherDocuments = () => {
                 files: award.files,
             })),
             documents: Object.entries(fileIds)
-                .filter(([key, value]) => value !== null)
-                .map(([key, value]) => {
+                .map(([key, value]) => { // NO FILTER HERE, WE WANT TO DEBUG
                     let documentType: DocumentType | undefined;
 
                     switch (key) {
                         case "saglykKepilnama":
-                            documentType = DocumentType.MEDICAL_RECORD; // Corrected mapping
+                            documentType = DocumentType.MEDICAL_RECORD;
                             break;
                         case "threeArka":
                             documentType = DocumentType.RELATIONSHIP_TREE;
@@ -229,19 +234,23 @@ const OtherDocuments = () => {
                             documentType = DocumentType.MILITARY_DOCUMENT;
                             break;
                         case "nikaHaty":
-                            documentType = DocumentType.NIKA_HATY;
+                            documentType = DocumentType.NIKA_HATY; // This needs to match the backend!
                             break;
                         default:
                             documentType = undefined;
                             break;
                     }
 
-                    return {
-                        type: documentType!,
+                    const doc = (value !== null && documentType) ? {
+                        type: documentType,
                         file: value,
-                    };
-                })
-                .filter(doc => doc.type !== undefined) as { type: DocumentType; file: number | null }[],
+                    } : {}; // Create empty object if value is null or documentType is undefined
+
+                    console.log(`Document for ${key}:`, doc); // DEBUG: Inspect each document object
+
+                    return doc;
+                }),
+                // .filter(doc => Object.keys(doc).length > 0) // Filter out empty objects {}, will need to debug first
         };
 
         console.log("Client Data being submitted:", clientData); // Verileri konsola yazdır
@@ -278,6 +287,12 @@ const OtherDocuments = () => {
                 throw new Error(`Unknown field name: ${fieldName}`);
         }
     };
+    useEffect(() => {
+        const storedGender = sessionStorage.getItem("gender");
+        if (storedGender) {
+            setGender(storedGender);
+        }
+    }, []);
 
     return (
         <div className="pt-10 px-4 pb-10">
@@ -348,17 +363,19 @@ const OtherDocuments = () => {
                     required // Make required
                 />
 
-                <DocumentUpload
-                    label="Military service"
-                    fieldName="militaryService"
-                    file={files.militaryService?.file}
-                    isUploading={files.militaryService?.isUploading}
-                    fileInputRef={el => (fileInputRefs.current.militaryService = el)}
-                    onFileChange={handleFileChange}
-                    onPlusClick={handlePlusClick}
-                    onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
-                />
+                {gender !== 'female' && (
+                    <DocumentUpload
+                        label="Military service"
+                        fieldName="militaryService"
+                        file={files.militaryService?.file}
+                        isUploading={files.militaryService?.isUploading}
+                        fileInputRef={el => (fileInputRefs.current.militaryService = el)}
+                        onFileChange={handleFileChange}
+                        onPlusClick={handlePlusClick}
+                        onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
+                        required={gender !== 'female'}
+                    />
+                )}
 
                 <DocumentUpload
                     label="Nika haty"
