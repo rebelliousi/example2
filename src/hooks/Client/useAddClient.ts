@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api";
+import { toast } from 'react-hot-toast'; // Import toast library
 
 export type GuardianRelation = 'mother' | 'father' | 'grandparent' | 'sibling' | 'uncle' | 'aunt';
 export type OlympicType = 'area' | 'region' | 'state' | 'international' | 'other';
@@ -83,25 +84,28 @@ export interface IClient {
   status?: 'PENDING' | 'APPROVED' | 'REJECTED'; // API'de görüldüğü için ekledim
 }
 
+// Define the type for the API response.  Assuming the backend returns an object with an `id` property.
+interface AddClientResponse {
+  id: number;  //  Adjust the type of `id` if it's not a number.
+  [key: string]: any; // Allow other properties (for flexibility)
+}
+
+
 export const useAddClient = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<AddClientResponse, Error, IClient>({  // Specify types for mutationFn response, error, and variables.
     mutationFn: async (newApplication: IClient) => {
-      const response = await api.post('/admission/client/', newApplication);
-      return response.data; // response.data içinde id var
+      const response = await api.post<AddClientResponse>('/admission/client/', newApplication);  // Type the api.post response
+       console.log('response:',response)
+      return response.data;
+     
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['client'] });
+   
 
-      // Burada id'yi sessionStorage'e kaydediyoruz
-      if (data && data.id) {
-        sessionStorage.setItem('clientId', data.id.toString()); // id'yi string'e çeviriyoruz
-      }
-    },
-    onError: (error) => {
-      // Hata durumunda yapılacak işlemler (opsiyonel)
-      console.error("Client eklenirken bir hata oluştu:", error);
-    },
+     
+
+
+  
   });
 };

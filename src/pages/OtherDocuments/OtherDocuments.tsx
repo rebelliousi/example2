@@ -259,7 +259,19 @@ const OtherDocuments = () => {
         try {
             await addClient(clientData);
             toast.success('Application submitted');
-            sessionStorage.clear();
+
+            // *** Benzersiz bir tanımlayıcı ile sessionStorage'a kaydet ***
+            const uniqueIdentifier = `applicationSubmitted_${Date.now()}`;
+            sessionStorage.setItem('applicationStatus', uniqueIdentifier);
+
+            // SADECE başvuruyla ilgili anahtarları sil
+            sessionStorage.removeItem('degreeInformation');
+            sessionStorage.removeItem('generalInformation');
+            sessionStorage.removeItem('guardians');
+            sessionStorage.removeItem('educationInformation');
+            sessionStorage.removeItem('awardInformation');
+            sessionStorage.removeItem('gender');
+
             navigate("/application-status");
         } catch (error: any) {
             toast.error('An error occurred while submitting');

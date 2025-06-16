@@ -349,15 +349,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             guardian.relation === 'mother' ? "Mother's General Information" :
                                 `Guardian ${index + 1} General Information`}
                     </h1>
-                    {guardian.relation !== 'father' && guardian.relation !== 'mother' && (
-                        <button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            className=" text-gray-400"
-                        >
-                            <TrashIcon />
-                        </button>
-                    )}
+                 
                 </div>
 
                 {/* Conditionally render the Relation field based on the guardian's relation */}

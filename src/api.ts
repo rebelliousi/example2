@@ -38,7 +38,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
           // Refresh token yoksa, kullanıcıyı login sayfasına yönlendir
-          window.location.href = '/login';
+          window.location.href = '/required_documents';
           return Promise.reject(error);
         }
 
@@ -62,7 +62,7 @@ api.interceptors.response.use(
         // Refresh token yenileme başarısız olduysa, kullanıcıyı login sayfasına yönlendir
         localStorage.removeItem('accessToken'); // GÜNCELLENDİ
         localStorage.removeItem('refreshToken'); // GÜNCELLENDİ
-        window.location.href = '/login';
+        window.location.href = '/required_documents';
         return Promise.reject(refreshError);
       }
     }

@@ -7,6 +7,7 @@ import InstructionPage from './pages/InstructionPage.tsx/InstructionPage';
 import InformationRoutes from './components/Routes/InformationRoutes';
 import ApplicationStatusPage from './pages/ApplicationStatus/ApplicationStatusPage';
 import DetailPage from './pages/DetailPage/DetailApplication';
+import ExampleStatus from './pages/ApplicationStatus/ExampleStatus';
 
 
 function App() {
