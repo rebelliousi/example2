@@ -2,66 +2,60 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Space, Button } from "antd";
 import Container from "../../components/Container/Container";
 import Navbar from "../../components/Navbar/Navbar";
-import { useEffect, useState } from "react";
-import { Spin } from 'antd';
-import { useApplication, type IApplication } from "../../hooks/Application/useApplications";
+
+import { useEffect, useState } from 'react';
+import React from 'react'; // Import React
+import { useClients } from '../../hooks/Client/useClients';
+import type { Client } from '../../hooks/Client/useClients'; // Import Client interface
 
 const ApplicationStatusPage = () => {
     const navigate = useNavigate();
-    const [applicationSubmitted, setApplicationSubmitted] = useState(false);
-    const [application, setApplication] = useState<IApplication | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [isEditing, setIsEditing] = useState(false);
-    const [page, setPage] = useState(1);
 
-    const { data, isLoading, isError, error } = useApplication(page);
-    console.log('application datasi:',data)
+    const { data, isError, error } = useClients(1);
+    console.log('application datasi:', data)
+
+    const [noteSection, setNoteSection] = useState<React.ReactNode>(null);
 
     useEffect(() => {
-        const status = sessionStorage.getItem('applicationStatus');
-        if (status) {
-            setApplicationSubmitted(true);
-        } else {
-            setApplicationSubmitted(false);
-        }
-    }, []);
-  console.log('application datasi2:',data)
-    useEffect(() => {
-        if (applicationSubmitted) {
-            setLoading(true)
-            if (data && data.results.length > 0) {
-              //BURADA KENDI FILTRELEME LOGIGINIZI KULLANIN!
+        if (data?.results && data?.results.length > 0) { // Check if results exist and are not empty
+            const firstResult = data.results[0]; // Get the first result
 
-              //Get the current user ID
-              const userId = 6; //This needs to be dynamic and come from the user login
-
-              //Find the application of the user
-              const userApplication = data.results.find(app => app.user.id === userId);
-
-              if (userApplication) {
-                setApplication(userApplication);
-              } else {
-                setApplication(null);
-                console.warn("No application found for user ID:", userId);
-              }
+            if (firstResult.status === "APPROVED") {
+                setNoteSection(
+                    <div className="bg-[#F8FAFC] w-wull h-auto p-10">
+                        <h1 className="mb-5 font-bold text-[18px]">Verify your personality</h1>
+                        <p className="pb-7">Cras eget elit semper, congue sapien id, pellentesque diam. Nulla faucibus diam nec fermentum ullamcorper. Praesent sed ipsum ut augue vestibulum malesuada. Duis vitae volutpat odio. Integer sit amet elit ac justo sagittis dignissim.</p>
+                        <p>Vivamus quis metus in nunc semper efficitur eget vitae diam. Proin justo diam, venenatis sit amet eros in, iaculis auctor magna. Pellentesque sit amet accumsan urna, sit amet pretium ipsum. Fusce condimentum venenatis mauris et luctus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;</p>
+                    </div>
+                );
+            } else if (firstResult.status === "REJECTED") {
+                setNoteSection(
+                    <div className="bg-[#F8FAFC] w-wull h-auto p-10">
+                        <h1 className="mb-5 font-bold text-[18px]">Rejection Reason</h1>
+                        <p className="pb-7">{firstResult.id || "No rejection reason provided."}</p>
+                    </div>
+                );
+            } else {
+                setNoteSection(
+                    <div className="bg-[#F8FAFC] w-wull h-auto p-10">
+                        <h1 className="mb-5 font-bold text-[18px]">Note or text</h1>
+                        <p className="pb-7">We will send you a notification in 3 days, please wait</p>
+                        <p>Vivamus quis metus in nunc semper efficitur eget vitae diam. Proin justo diam, venenatis sit amet eros in, iaculis auctor magna. Pellentesque sit amet accumsan urna, sit amet pretium ipsum. Fusce condimentum venenatis mauris et luctus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;</p>
+                    </div>
+                );
             }
-            setLoading(false)
         } else {
-            setLoading(false);
-        }
-    }, [data, applicationSubmitted]);
-     console.log('application datasi3:',data)
-
-    if (loading) {
-        return (
-            <Container>
-                <Navbar />
-                <div className="flex justify-center items-center h-screen">
-                    <Spin size="large" tip="Loading Application..." />
+            // Handle the case where data is null or results array is empty.  For example:
+            setNoteSection(
+                <div className="bg-[#F8FAFC] w-wull h-auto p-10">
+                    <h1 className="mb-5 font-bold text-[18px]">No Application Data</h1>
+                    <p className="pb-7">No application data available.</p>
                 </div>
-            </Container>
-        );
-    }
+            );
+        }
+
+    }, [data]);  // useEffect depends on 'data' to re-render when the data changes
+
 
     if (isError) {
         return (
@@ -72,25 +66,8 @@ const ApplicationStatusPage = () => {
         );
     }
 
-    if (!applicationSubmitted) {
-        return (
-            <Container>
-                <Navbar />
-                <div>Başvuru bulunamadı veya henüz gönderilmedi.</div>
-            </Container>
-        );
-    }
 
-    if (!application) {
-        return (
-            <Container>
-                <Navbar />
-                <div>Başvuru bilgileri alınamadı. Lütfen bilgilerinizi kontrol edin ve tekrar deneyin.</div>
-            </Container>
-        );
-    }
-
-    const getStatusColors = (status: IApplication["status"] | undefined) => {
+    const getStatusColors = (status: Client["status"] | undefined) => { // use status: string | undefined
         switch (status) {
             case "PENDING":
                 return { textColor: "#FFAE1F", backgroundColor: "#FEF5E5" };
@@ -103,40 +80,9 @@ const ApplicationStatusPage = () => {
         }
     };
 
-    const statusColors = getStatusColors(application.status);
+    const statusColors = getStatusColors(data?.results?.[0]?.status); // Access status safely, using optional chaining and checking length
 
-    let noteSection;
-
-    if (application.status === "APPROVED") {
-        noteSection = (
-            <div className="bg-[#F8FAFC] w-wull h-auto p-10">
-                <h1 className="mb-5 font-bold text-[18px]">Verify your personality</h1>
-                <p className="pb-7">Cras eget elit semper, congue sapien id, pellentesque diam. Nulla faucibus diam nec fermentum ullamcorper. Praesent sed ipsum ut augue vestibulum malesuada. Duis vitae volutpat odio. Integer sit amet elit ac justo sagittis dignissim.</p>
-                <p>VVivamus quis metus in nunc semper efficitur eget vitae diam. Proin justo diam, venenatis sit amet eros in, iaculis auctor magna. Pellentesque sit amet accumsan urna, sit amet pretium ipsum. Fusce condimentum venenatis mauris et luctus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;</p>
-            </div>
-        );
-    } else if (application.status === "REJECTED") {
-        noteSection = (
-            <div className="bg-[#F8FAFC] w-wull h-auto p-10">
-                <h1 className="mb-5 font-bold text-[18px]">Rejection Reason</h1>
-                <p className="pb-7">{application.id || "No rejection reason provided."}</p>
-            </div>
-        );
-    } else {
-        noteSection = (
-            <div className="bg-[#F8FAFC] w-wull h-auto p-10">
-                <h1 className="mb-5 font-bold text-[18px]">Note or text</h1>
-                <p className="pb-7">We will send you a notification in 3 days, please wait</p>
-                <p>Vivamus quis metus in nunc semper efficitur eget vitae diam. Proin justo diam, venenatis sit amet eros in, iaculis auctor magna. Pellentesque sit amet accumsan urna, sit amet pretium ipsum. Fusce condimentum venenatis mauris et luctus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;</p>
-            </div>
-        );
-    }
-
-    const handleEditClick = () => {
-        setIsEditing(true);
-        navigate('/infos/degree-information', { state: { application, isEditing: true } });
-    };
-     console.log('application datasi4:',data)
+    const firstClient = data?.results?.[0]; // Safely get the first client
 
     return (
         <Container>
@@ -155,7 +101,7 @@ const ApplicationStatusPage = () => {
                                 Name
                             </label>
                             <div className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px] flex items-center px-2">
-                                {application.full_name}
+                                {firstClient?.full_name}
                             </div>
                         </div>
 
@@ -164,9 +110,8 @@ const ApplicationStatusPage = () => {
                                 Major
                             </label>
                             <div className="rounded-md w-[400px] h-[40px] border-[#DFE5EF] text-[14px] flex items-center px-2">
-                           {Array.isArray(application.primary_major)
-                            ? application.primary_major[0]?.major
-                            : application.primary_major?.major}
+                                {/* Safely access the major */}
+                                {firstClient?.primary_major?.major}
                             </div>
                         </div>
 
@@ -175,7 +120,7 @@ const ApplicationStatusPage = () => {
                                 Address
                             </label>
                             <div className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px] flex items-center px-2">
-                                {application.user.area}
+                                {firstClient?.user?.area} {/* Safe access */}
                             </div>
                         </div>
 
@@ -184,7 +129,7 @@ const ApplicationStatusPage = () => {
                                 Phone number
                             </label>
                             <div className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md text-[14px] flex items-center px-2">
-                                {application.admission}
+                                {firstClient?.id}
                             </div>
                         </div>
 
@@ -195,33 +140,34 @@ const ApplicationStatusPage = () => {
                             <div
                                 className="w-auto h-[40px] border-[#DFE5EF] rounded-md text-[14px] flex items-center px-2 py-2"
                                 style={{
-                                    backgroundColor: statusColors.backgroundColor,
-                                    color: statusColors.textColor,
+                                    backgroundColor: statusColors?.backgroundColor, // Safe access
+                                    color: statusColors?.textColor, // Safe access
                                 }}
                             >
-                                {application.status}
+                                {firstClient?.status}
                             </div>
                         </div>
                     </div>
 
-                    {noteSection}
+
 
                     <div className="flex justify-start space-x-5 ">
                         <Link
-                            to={`/detail/${application.id}`}
+                            to={`/detail/${firstClient?.id}`} // Safe access
                             className="bg-primaryBlue hover:text-white  text-white  py-2 px-4 rounded"
                         >
                             Form Overview
                         </Link>
                         <Button
                             className="text-textSecondary bg-white border  border-#DFE5EF hover:bg-primaryBlue hover:text-white py-2 px-4 rounded hover:transition-all hover:duration-500"
-                            onClick={handleEditClick}
+
                         >
                             Edit form
                         </Button>
                     </div>
                 </Space>
             </div>
+            {noteSection} {/* Render the note section here */}
         </Container>
     );
 };

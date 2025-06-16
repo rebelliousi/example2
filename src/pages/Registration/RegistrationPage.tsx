@@ -6,22 +6,51 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuthStore } from "../../store/useAuthStore";
 import { Form, Input, Button, Modal } from "antd";
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import type { AxiosResponse } from 'axios'; // Import AxiosResponse
 
-interface UserInfo {
+interface User {  // Define your user type precisely
+    username: string;
     first_name: string;
     last_name: string;
     father_name: string;
+    area: string | null;
+    gender: string;
+    nationality: string;
+    date_of_birth: string | null;
+    address: string;
+    place_of_birth: string;
+    home_phone: string | null;
     phone: string;
     email: string;
+    guardians: any[]; // Or a more specific type if you have it
+    documents: any[]; // Or a more specific type if you have it
 }
+
+interface RegistrationResponse {
+    status: string;
+    message: string;
+    data: {
+        user: User;
+        id: number;
+        access: string;
+        refresh: string;
+    };
+}
+
+// Define the structure of the Axios response that `useAddUser` actually returns.
+interface AxiosRegistrationResponse extends AxiosResponse<RegistrationResponse> {}
+
 
 interface LoginPageProps {
     closeModal: () => void;
 }
 
+
+
+
 const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
-    const [form] = Form.useForm(); // Ant Design Form Instance
-    const [isPending, setIsPending] = useState(false); // Local pending state.  `useAddUser` hook's `isPending` probably won't update fast enough for good UX
+    const [form] = Form.useForm();
+    const [isPending, setIsPending] = useState(false);
     const navigate = useNavigate();
     const { mutateAsync } = useAddUser();
     const { login } = useAuthStore();
@@ -30,9 +59,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
     const onFinish = async (values: any) => {
         setIsPending(true);
         try {
-            const response = await mutateAsync(values);  // Pass ALL form values to the API
+            const response: AxiosRegistrationResponse = await mutateAsync(values);
 
-            if (response?.data?.data?.access && response?.data?.data?.refresh) {
+            if (response?.data?.data?.access && response?.data?.data?.refresh) { // Access tokens from .data.data
                 localStorage.setItem("accessToken", response.data.data.access);
                 localStorage.setItem("refreshToken", response.data.data.refresh);
 
@@ -43,7 +72,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
                 localStorage.removeItem("redirectAfterLogin");
                 navigate(redirectPath);
 
-                closeModal(); // Close the modal after successful registration
+                closeModal();
             } else {
                 toast.error("Registration successful but couldn't retrieve tokens. Please login manually.", { duration: 5000 });
             }
@@ -76,7 +105,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ closeModal }) => {
                 onFinish={onFinish}
                 onFinishFailed={onFinishFailed}
                 autoComplete="off"
-                layout="vertical" // Stack labels above inputs
+                layout="vertical"
 
             >
                 <Form.Item

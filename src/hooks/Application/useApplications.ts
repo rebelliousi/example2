@@ -13,7 +13,7 @@ export interface IApplication {
   id: number;
   user: User;
   full_name: string;
-  primary_major: Major | Major[];
+  primary_major: Major[];
   admission: number;
   admission_year: string;
   status: "PENDING" | "APPROVED" | "REJECTED"; // Define all possible status values here.  Crucially, include ALL possible values.
@@ -29,8 +29,8 @@ interface Major {
   major: string;
 }
 
-//Revised getApplication function to handle APIResponse<IApplication> with pagination
-const getApplication = async (page: number): Promise<APIResponse<IApplication>> => { // Correct return type here
+
+const getApplication = async (page: number): Promise<APIResponse<IApplication>> => {
   const response = await api.get<APIResponse<IApplication>>(`/admission/application?page=${page}`); // Added type parameter to api.get AND pagination parameter
   console.log(response.data);
   return response.data;
