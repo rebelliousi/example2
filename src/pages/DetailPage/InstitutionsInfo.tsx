@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, Space, Typography } from 'antd';
+import {  Space, Typography } from 'antd';
+import Button from '../../components/Buttons/Button';
+import DownloadIcon from '../../assets/icons/DownloadIcon';
 
 const { Text } = Typography;
 
@@ -56,10 +58,10 @@ const InstitutionsInfo: React.FC<Props> = ({ institutions }) => {
     };
 
     return (
-        <div className="w-full mb-40">
+        <div className="w-full mb-16">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="text-md text-[#4570EA] font-semibold">
-                    Educational Institutions
+                    Educational Information
                 </h3>
             </div>
 
@@ -92,18 +94,19 @@ const InstitutionsInfo: React.FC<Props> = ({ institutions }) => {
                         </div>
                         <div className="flex items-center space-x-5 mb-2">
                             <label className="p-3 font-medium w-48">Certificates:</label>
-                            <div className="p-4 w-[400px]">
+                            <div className="w-[400px]">
                                 {institution.certificateFilePaths && Array.isArray(institution.certificateFilePaths) && institution.certificateFilePaths.length > 0 ? (
                                     <ul>
                                         {institution.certificateFilePaths.map((path, idx) => (
                                             <li key={idx}>
                                                 <Space direction="horizontal" align="center">
                                                     <Text>{getFileIcon(path)}</Text>
-                                                    <Button type="primary" size="small" onClick={(e) => {
+                                                    <Button                                                             className="flex items-center gap-2 px-4 py-2 bg-white border border-[#4570EA] text-[#4570EA]  rounded-full "
+ onClick={(e) => {
                                                         e.preventDefault();
-                                                        downloadFile(path, path.substring(path.lastIndexOf('/') + 1));
-                                                    }}>
-                                                        Download Certificate
+                                                        downloadFile(path, path.substring(path.lastIndexOf('/') ));
+                                                    }}>  <DownloadIcon className="w-4 h-4" />
+                                                        Download 
                                                     </Button>
                                                 </Space>
                                             </li>

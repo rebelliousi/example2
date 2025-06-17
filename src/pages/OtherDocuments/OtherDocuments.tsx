@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Space, Button, message, Spin } from "antd";
+import { Space, Button, message, Spin, Select } from "antd"; //Import select
 import InfoCircleIcon from "../../assets/icons/InfoCircleIcon";
 import { Link, useNavigate } from "react-router-dom";
 import PlusIcon from "../../assets/icons/PlusIcon";
@@ -8,28 +8,27 @@ import { useAddClient } from "../../hooks/Client/useAddClient";
 import { useSendFiles } from "../../hooks/Client/useSendFIles";
 import toast from "react-hot-toast";
 
+export type DocumentType = // Moved to the top-level for better reusability
+    | 'school_certificate'
+    | 'passport'
+    | 'military_document'
+    | 'information'
+    | 'relationship_tree'
+    | 'medical_record'
+    | 'description'
+    | 'terjiimehal'
+    | 'labor_book'
+    | 'Dushundirish'
+    | 'nika_haty'
+    | 'death_certificate'
+    | 'diploma';
+
 type FileFieldName = "saglykKepilnama" | "threeArka" | "maglumat" | "terjimehal" | "threeXFourSurat" | "militaryService" | "nikaHaty";
 
-enum DocumentType {
-    SCHOOL_CERTIFICATE = "school_certificate",
-    PASSPORT = "passport",
-    MILITARY_DOCUMENT = "military_document",
-    INFORMATION = "information",
-    RELATIONSHIP_TREE = "relationship_tree",
-    MEDICAL_RECORD = "medical_record",
-    DESCRIPTION = "description",
-    TERJIMEHAL = "terjiimehal", // Corrected
-    LABOR_BOOK = "labor_book",
-    SAGLYK_KEPILNAMA = "medical_record", // Assuming this is how you map it! double check.
-    THREE_ARKA = "relationship_tree", // Updated
-    MAGLUMAT = "information",
-    THREE_X_FOUR_SURAT = "information", // Updated
-    MILITARY_SERVICE = "military_document",
-    NIKA_HATY = "nika_haty", // VERY IMPORTANT: MUST MATCH BACKEND EXACTLY
-}
+// Remove enum DocumentType and use the type definition above
 
 interface FileState {
-    type: DocumentType;
+    type: DocumentType | null; // Allow null initially
     file: File | null;
     filePaths: string[];
     isUploading: boolean; // Yükleme durumunu takip etmek için
@@ -78,10 +77,11 @@ const OtherDocuments = () => {
         nikaHaty: null,
     });
 
-    const uploadDocument = async (fieldName: FileFieldName, file: File) => {
+    const uploadDocument = async (fieldName: FileFieldName, file: File, documentType: DocumentType) => {
         return new Promise<number>((resolve, reject) => {
             const formData = new FormData();
             formData.append('path', file);
+            formData.append('documentType', documentType); //Send Doc Type
 
             uploadFile(formData, {
                 onSuccess: (data: any) => {
@@ -120,17 +120,24 @@ const OtherDocuments = () => {
     ) => {
         const file = e.target.files?.[0];
         if (file) {
+            const currentFileState = files[fieldName];
+            if (!currentFileState?.type) {
+                // This should not happen anymore because types are pre-selected
+                console.warn("Document type was unexpectedly null.");
+                return;
+            }
+
             setFiles(prev => ({
                 ...prev,
                 [fieldName]: {
-                    type: mapFileFieldToDocumentType(fieldName),
+                    ...currentFileState,
                     file: file,
-                    filePaths: [],
                     isUploading: true
                 }
             }));
+
             try {
-                const fileId = await uploadDocument(fieldName, file);
+                const fileId = await uploadDocument(fieldName, file, currentFileState.type);
                 setFileIds(prev => ({ ...prev, [fieldName]: fileId }));
             } catch (error) {
                 console.error("Something went wrong:", error);
@@ -162,6 +169,17 @@ const OtherDocuments = () => {
             return rest;
         });
     };
+
+    //No longer used - type is now pre-selected
+    // const handleDocumentTypeChange = (fieldName: FileFieldName, value: DocumentType | null) => {
+    //     setFiles(prev => ({
+    //         ...prev,
+    //         [fieldName]: {
+    //             ...prev[fieldName] || { file: null, filePaths: [], isUploading: false }, // Preserve existing file if any.
+    //             type: value
+    //         }
+    //     }));
+    // };
 
     const handleSubmit = async () => {
         // Validation: Ensure required files are uploaded (except Nika Haty)
@@ -210,47 +228,40 @@ const OtherDocuments = () => {
                 description: award.description,
                 files: award.files,
             })),
-            documents: Object.entries(fileIds)
-                .map(([key, value]) => { // NO FILTER HERE, WE WANT TO DEBUG
-                    let documentType: DocumentType | undefined;
+           documents: Object.entries(fileIds).map(([key, value]) => {
+                let documentType: DocumentType | undefined;
 
-                    switch (key) {
-                        case "saglykKepilnama":
-                            documentType = DocumentType.MEDICAL_RECORD;
-                            break;
-                        case "threeArka":
-                            documentType = DocumentType.RELATIONSHIP_TREE;
-                            break;
-                        case "maglumat":
-                            documentType = DocumentType.INFORMATION;
-                            break;
-                        case "terjimehal":
-                            documentType = DocumentType.TERJIMEHAL;
-                            break;
-                        case "threeXFourSurat":
-                            documentType = DocumentType.INFORMATION;
-                            break;
-                        case "militaryService":
-                            documentType = DocumentType.MILITARY_DOCUMENT;
-                            break;
-                        case "nikaHaty":
-                            documentType = DocumentType.NIKA_HATY; // This needs to match the backend!
-                            break;
-                        default:
-                            documentType = undefined;
-                            break;
-                    }
-
-                    const doc = (value !== null && documentType) ? {
-                        type: documentType,
-                        file: value,
-                    } : {}; // Create empty object if value is null or documentType is undefined
-
-                    console.log(`Document for ${key}:`, doc); // DEBUG: Inspect each document object
-
-                    return doc;
-                }),
-                // .filter(doc => Object.keys(doc).length > 0) // Filter out empty objects {}, will need to debug first
+                switch (key) {
+                    case "saglykKepilnama":
+                        documentType = "medical_record";
+                        break;
+                    case "threeArka":
+                        documentType = "relationship_tree";
+                        break;
+                    case "maglumat":
+                        documentType = "information";
+                        break;
+                    case "terjimehal":
+                        documentType = "terjiimehal";
+                        break;
+                    case "threeXFourSurat":
+                        documentType = "information";
+                        break;
+                    case "militaryService":
+                        documentType = "military_document";
+                        break;
+                    case "nikaHaty":
+                        documentType = "nika_haty";
+                        break;
+                    default:
+                        documentType = undefined;
+                }
+                if (value !== null && documentType) {
+                    return { type: documentType, file: value };
+                } else {
+                    return null;  // Or handle the case where value is null differently
+                }
+            }).filter(doc => doc !== null) as { type: DocumentType; file: number }[], //Explicit type assertion and filtering null values
         };
 
         console.log("Client Data being submitted:", clientData); // Verileri konsola yazdır
@@ -278,32 +289,49 @@ const OtherDocuments = () => {
             console.error("Error", error);
         }
     };
-
-    const mapFileFieldToDocumentType = (fieldName: FileFieldName): DocumentType => {
-        switch (fieldName) {
-            case "saglykKepilnama":
-                return DocumentType.MEDICAL_RECORD;
-            case "threeArka":
-                return DocumentType.RELATIONSHIP_TREE;
-            case "maglumat":
-                return DocumentType.INFORMATION;
-            case "terjimehal":
-                return DocumentType.TERJIMEHAL;
-            case "threeXFourSurat":
-                return DocumentType.INFORMATION;
-            case "militaryService":
-                return DocumentType.MILITARY_DOCUMENT;
-            case "nikaHaty":
-                return DocumentType.NIKA_HATY;
-            default:
-                throw new Error(`Unknown field name: ${fieldName}`);
-        }
-    };
     useEffect(() => {
         const storedGender = sessionStorage.getItem("gender");
         if (storedGender) {
             setGender(storedGender);
         }
+    }, []);
+
+    const getDefaultDocumentType = (fieldName: FileFieldName): DocumentType => {
+        switch (fieldName) {
+            case "saglykKepilnama":
+                return "medical_record";
+            case "threeArka":
+                return "relationship_tree";
+            case "maglumat":
+                return "information";
+            case "terjimehal":
+                return "terjiimehal";
+            case "threeXFourSurat":
+                return "information";
+            case "militaryService":
+                return "military_document";
+            case "nikaHaty":
+                return "nika_haty";
+            default:
+                throw new Error(`Unknown field name: ${fieldName}`);
+        }
+    };
+
+    useEffect(() => {
+        // Set default document types on component mount
+        Object.keys(fileInputRefs.current).forEach((fieldNameKey) => {
+            const fieldName = fieldNameKey as FileFieldName;
+            const defaultType = getDefaultDocumentType(fieldName);
+            setFiles(prev => ({
+                ...prev,
+                [fieldName]: {
+                    type: defaultType,
+                    file: null,
+                    filePaths: [],
+                    isUploading: false
+                }
+            }));
+        });
     }, []);
 
     return (
@@ -319,60 +347,70 @@ const OtherDocuments = () => {
                     label="Saglyk kepilnama"
                     fieldName="saglykKepilnama"
                     file={files.saglykKepilnama?.file}
+                    selectedDocumentType={files.saglykKepilnama?.type}
                     isUploading={files.saglykKepilnama?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.saglykKepilnama = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("saglykKepilnama")} // Pass default type
                 />
 
                 <DocumentUpload
                     label="3 arka"
                     fieldName="threeArka"
                     file={files.threeArka?.file}
+                    selectedDocumentType={files.threeArka?.type}
                     isUploading={files.threeArka?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.threeArka = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("threeArka")} // Pass default type
                 />
 
                 <DocumentUpload
                     label="Maglumat"
                     fieldName="maglumat"
                     file={files.maglumat?.file}
+                    selectedDocumentType={files.maglumat?.type}
                     isUploading={files.maglumat?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.maglumat = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("maglumat")} // Pass default type
                 />
 
                 <DocumentUpload
                     label="Terjimehal"
                     fieldName="terjimehal"
                     file={files.terjimehal?.file}
+                    selectedDocumentType={files.terjimehal?.type}
                     isUploading={files.terjimehal?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.terjimehal = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("terjimehal")} // Pass default type
                 />
 
                 <DocumentUpload
                     label="3X4 surat"
                     fieldName="threeXFourSurat"
                     file={files.threeXFourSurat?.file}
+                    selectedDocumentType={files.threeXFourSurat?.type}
                     isUploading={files.threeXFourSurat?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.threeXFourSurat = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required // Make required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("threeXFourSurat")} // Pass default type
                 />
 
                 {gender !== 'female' && (
@@ -380,12 +418,14 @@ const OtherDocuments = () => {
                         label="Military service"
                         fieldName="militaryService"
                         file={files.militaryService?.file}
+                        selectedDocumentType={files.militaryService?.type}
                         isUploading={files.militaryService?.isUploading}
                         fileInputRef={el => (fileInputRefs.current.militaryService = el)}
                         onFileChange={handleFileChange}
                         onPlusClick={handlePlusClick}
                         onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                        required={gender !== 'female'}
+                        // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                        defaultDocumentType={getDefaultDocumentType("militaryService")} // Pass default type
                     />
                 )}
 
@@ -393,12 +433,14 @@ const OtherDocuments = () => {
                     label="Nika haty"
                     fieldName="nikaHaty"
                     file={files.nikaHaty?.file}
+                    selectedDocumentType={files.nikaHaty?.type}
                     isUploading={files.nikaHaty?.isUploading}
                     fileInputRef={el => (fileInputRefs.current.nikaHaty = el)}
                     onFileChange={handleFileChange}
                     onPlusClick={handlePlusClick}
                     onDeleteFile={handleDeleteFile} //Dosya silme işleyicisi aktarılıyor
-                    required={false} //Do not make it required
+                    // onDocumentTypeChange={handleDocumentTypeChange} // Pass handler - No longer used
+                    defaultDocumentType={getDefaultDocumentType("nikaHaty")} // Pass default type
                 />
 
                 <div className="flex justify-end mt-12 space-x-5">
@@ -426,11 +468,14 @@ interface DocumentUploadProps {
     label: string;
     fieldName: FileFieldName;
     file?: File | null;
+    selectedDocumentType?: DocumentType | null;
     isUploading?: boolean;
     fileInputRef: (el: HTMLInputElement | null) => void;
     onFileChange: (fieldName: FileFieldName, e: React.ChangeEvent<HTMLInputElement>) => void;
     onPlusClick: (fieldName: FileFieldName) => void;
     onDeleteFile: (fieldName: FileFieldName) => void; //Silme işleyicisi eklendi
+    // onDocumentTypeChange: (fieldName: FileFieldName, value: DocumentType | null) => void; //No longer used
+    defaultDocumentType: DocumentType;  //New Prop - Default Document Type
     required?: boolean;
 }
 
@@ -438,17 +483,45 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     label,
     fieldName,
     file,
+    selectedDocumentType,
     isUploading,
     fileInputRef,
     onFileChange,
     onPlusClick,
     onDeleteFile, //Silme işleyicisi alındı
+    // onDocumentTypeChange, //No longer used
+    defaultDocumentType,  //New Prop
     required = true
 }) => {
+    // const documentTypeOptions = [    //No longer used in DocumentUpload
+    //     { value: 'school_certificate', label: 'School Certificate' },
+    //     { value: 'passport', label: 'Passport' },
+    //     { value: 'military_document', label: 'Military Document' },
+    //     { value: 'information', label: 'Information' },
+    //     { value: 'relationship_tree', label: 'Relationship Tree' },
+    //     { value: 'medical_record', label: 'Medical Record' },
+    //     { value: 'description', label: 'Description' },
+    //     { value: 'terjiimehal', label: 'Terjiimehal' },
+    //     { value: 'labor_book', label: 'Labor Book' },
+    //     { value: 'Dushundirish', label: 'Dushundirish' },
+    //     { value: 'nika_haty', label: 'Nika Haty' },
+    //     { value: 'death_certificate', label: 'Death Certificate' },
+    //     { value: 'diploma', label: 'Diploma' },
+    // ];
+
     return (
-        <div className="flex flex-col sm:flex-row items-start gap-4  ">
-            <label className="w-44 font-[400] text-[14px] self-center">{label}</label>
-            <Space>
+        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+            <label className="w-44 font-[400] text-[14px] self-center">{label} ({defaultDocumentType})</label>
+            <Space direction="vertical">
+                {/*  Select component removed - type is preselected */}
+                {/*<Select*/}
+                {/*    placeholder="Select Document Type"*/}
+                {/*    style={{ width: 400 }}*/}
+                {/*    value={selectedDocumentType || undefined}*/}
+                {/*    onChange={(value) => onDocumentTypeChange(fieldName, value as DocumentType | null)}*/}
+                {/*options={documentTypeOptions}*/}
+                {/*/>*/}
+
                 <div className="flex items-center justify-center space-x-2">
                     <Button
                         onClick={() => {

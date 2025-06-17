@@ -11,6 +11,22 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
+export type DocumentType =
+  | 'school_certificate'
+  | 'passport'
+  | 'military_document'
+  | 'information'
+  | 'relationship_tree'
+  | 'medical_record'
+  | 'description'
+  | 'terjiimehal'
+  | 'labor_book'
+  | 'Dushundirish'
+  | 'nika_haty'
+  | 'death_certificate'
+  | 'diploma'
+  | 'relations';
+
 interface GuardianWithFiles {
     relation: string;
     first_name: string;
@@ -21,13 +37,9 @@ interface GuardianWithFiles {
     phone: string;
     address: string;
     work_place: string;
-    documents: { type: string; file: string; path: string }[];
+    documents: { type: DocumentType; file: string; path: string }[];
     filePaths: string[];
     isDeceased?: boolean | null;
-    passportFile?: File | null;
-    deathCertificateFile?: File | null;
-    isPassportUploading: boolean;
-    isDeathCertificateUploading: boolean;
 }
 
 interface GuardianFormProps {
@@ -50,10 +62,6 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             documents: [],
             filePaths: [],
             isDeceased: null,
-            passportFile: null,
-            deathCertificateFile: null,
-            isPassportUploading: false,
-            isDeathCertificateUploading: false
         },
         {
             relation: 'mother',
@@ -68,15 +76,14 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             documents: [],
             filePaths: [],
             isDeceased: null,
-            passportFile: null,
-            deathCertificateFile: null,
-            isPassportUploading: false,
-            isDeathCertificateUploading: false
         },
     ],
     onGuardiansSubmit,
 }) => {
     const [guardians, setGuardians] = useState<GuardianWithFiles[]>(initialGuardians);
+
+    //  Separate state to track uploading state *per guardian*
+    const [uploadingStates, setUploadingStates] = useState<boolean[]>([false, false]);  // Initialize for father and mother
 
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const deathCertificateInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -90,6 +97,15 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
     useEffect(() => {
         fileInputRefs.current = fileInputRefs.current.slice(0, guardians.length);
         deathCertificateInputRefs.current = deathCertificateInputRefs.current.slice(0, guardians.length);
+
+        // Make sure uploadingStates array is the same length as guardians
+        setUploadingStates(prev => {
+            const newStates = [...prev];
+            while (newStates.length < guardians.length) {
+                newStates.push(false); // or true, depending on your initialization needs
+            }
+            return newStates;
+        });
     }, [guardians.length]);
 
     const handleGuardianChange = (index: number, name: string, value: any) => {
@@ -103,20 +119,17 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
         });
     };
 
-    const handleFileUpload = async (index: number, file: File | null, documentType: string, isDeathCertificate: boolean = false) => {
+    const handleFileUpload = async (index: number, file: File | null, documentType: DocumentType, isDeathCertificate: boolean = false) => {
         if (!file) {
             toast.error('Please select a file.');
             return;
         }
 
-        setGuardians(prev => {
-            const newGuardians = [...prev];
-            if (isDeathCertificate) {
-                newGuardians[index].isDeathCertificateUploading = true;
-            } else {
-                newGuardians[index].isPassportUploading = true;
-            }
-            return newGuardians;
+        // Set the uploading state *for this guardian only*
+        setUploadingStates(prev => {
+            const newStates = [...prev];
+            newStates[index] = true;  // Set uploading state for this index
+            return newStates;
         });
 
         const formData = new FormData();
@@ -126,20 +139,16 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             onSuccess: (data: any) => {
                 setGuardians((prev) => {
                     const newGuardians = [...prev];
-                    newGuardians[index].documents = [{
-                        type: documentType,
-                        file: data.id,
-                        path: data.path
-                    }];
-                    newGuardians[index].filePaths = [data.path];
+                    newGuardians[index] = {
+                        ...newGuardians[index],
+                        documents: [...newGuardians[index].documents, {  // Append to existing documents
+                            type: documentType,
+                            file: data.id,
+                            path: data.path
+                        }],
+                        filePaths: [...newGuardians[index].filePaths, data.path] // Append to existing filePaths
+                    };
 
-                    if (isDeathCertificate) {
-                        newGuardians[index].deathCertificateFile = file;
-                        newGuardians[index].isDeathCertificateUploading = false;
-                    } else {
-                        newGuardians[index].passportFile = file;
-                        newGuardians[index].isPassportUploading = false;
-                    }
                     return newGuardians;
                 });
                 toast.success('File uploaded successfully');
@@ -147,17 +156,14 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             onError: (error: any) => {
                 console.error('File upload failed', error);
                 toast.error('File upload failed');
-
-                setGuardians(prev => {
-                    const newGuardians = [...prev];
-                    if (isDeathCertificate) {
-                        newGuardians[index].isDeathCertificateUploading = false;
-                    } else {
-                        newGuardians[index].isPassportUploading = false;
-                    }
-                    return newGuardians;
-                });
             },
+            onSettled: () => { // Always reset uploading state after success or error
+                setUploadingStates(prev => {
+                    const newStates = [...prev];
+                    newStates[index] = false; // Reset uploading state for this index
+                    return newStates;
+                });
+            }
         });
     };
 
@@ -213,12 +219,11 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                 documents: [],
                 filePaths: [],
                 isDeceased: null,
-                passportFile: null,
-                deathCertificateFile: null,
-                isPassportUploading: false,
-                isDeathCertificateUploading: false
             },
         ]));
+
+        //Also update uploading states
+        setUploadingStates(prev => [...prev, false]);
     };
 
     const removeItem = (index: number) => {
@@ -226,6 +231,13 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             const newItems = [...prev];
             newItems.splice(index, 1);
             return newItems;
+        });
+
+        // Also update uploadingStates
+        setUploadingStates(prev => {
+            const newStates = [...prev];
+            newStates.splice(index, 1);
+            return newStates;
         });
     };
 
@@ -316,19 +328,16 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             return newGuardians;
         });
     };
+
     const deleteFile = (index: number, isDeathCertificate: boolean = false) => {
         setGuardians(prev => {
             const newGuardians = [...prev];
             const guardianToUpdate = { ...newGuardians[index] };
 
-            guardianToUpdate.documents = [];
-            guardianToUpdate.filePaths = [];
+            const documentTypeToDelete:DocumentType = isDeathCertificate ? 'death_certificate' : 'passport';
 
-            if (isDeathCertificate) {
-                guardianToUpdate.deathCertificateFile = null;
-            } else {
-                guardianToUpdate.passportFile = null;
-            }
+            guardianToUpdate.documents = guardianToUpdate.documents.filter(doc => doc.type !== documentTypeToDelete);
+            guardianToUpdate.filePaths = guardianToUpdate.filePaths.filter((path, i) => guardianToUpdate.documents[i].type !== documentTypeToDelete);
 
             newGuardians[index] = guardianToUpdate;
             return newGuardians;
@@ -341,6 +350,8 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
             handleGuardianChange(index, 'date_of_birth', date ? formatDateForApi(date) : '');
         };
 
+        const isPassportUploading = uploadingStates[index] === true; // Get uploading state for this guardian
+
         return (
             <div className="col-span-6">
                 <div className="mb-4 flex items-center justify-between">
@@ -349,7 +360,7 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                             guardian.relation === 'mother' ? "Mother's General Information" :
                                 `Guardian ${index + 1} General Information`}
                     </h1>
-                 
+
                 </div>
 
                 {/* Conditionally render the Relation field based on the guardian's relation */}
@@ -542,24 +553,20 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                     <div className="flex items-center justify-between w-[400px]">
                                         <Button
                                             onClick={() => {
-                                                if (guardian.passportFile) {
-                                                    deleteFile(index);
-                                                } else {
-                                                    handlePlusClick(index);
-                                                }
+                                                handlePlusClick(index);
                                             }}
                                             type="text"
                                             className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
 
                                         >
-                                            {guardian.isPassportUploading ? (
+                                            {isPassportUploading ? (
                                                 <Spin size="small" />
                                             ) : (
                                                 <>
-                                                    {guardian.passportFile ? (
+                                                    {guardian.documents.some(doc => doc.type === 'passport') ? ( // Check if passport already uploaded
                                                         <div className="flex items-center justify-between w-full">
-                                                            <span>{guardian.passportFile.name}</span>
-                                                            <TrashIcon className='w-5' />
+                                                            <span>Passport uploaded</span>
+                                                            <TrashIcon className='w-5' onClick={() => deleteFile(index)} />
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center justify-center w-full gap-1">
@@ -616,24 +623,20 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                                         <div className="flex items-center justify-between  w-[400px]">
                                             <Button
                                                 onClick={() => {
-                                                    if (guardian.deathCertificateFile) {
-                                                        deleteFile(index, true);
-                                                    } else {
-                                                        handleDeathCertificatePlusClick(index);
-                                                    }
+                                                    handleDeathCertificatePlusClick(index);
                                                 }}
                                                 type="text"
                                                 className="cursor-pointer border-[#DFE5EF] rounded-md text-[14px] w-full h-[40px] flex items-center justify-center"
 
                                             >
-                                                {guardian.isDeathCertificateUploading ? (
+                                                {isPassportUploading ? (
                                                     <Spin size="small" />
                                                 ) : (
                                                     <>
-                                                        {guardian.deathCertificateFile ? (
+                                                        {guardian.documents.some(doc => doc.type === 'death_certificate') ? (  // Check if death certificate already uploaded
                                                             <div className="flex items-center justify-between w-full">
-                                                                <span>{guardian.deathCertificateFile.name}</span>
-                                                                <TrashIcon style={{ fontSize: '16px', marginLeft: '5px' }} />
+                                                                <span>Death certificate uploaded</span>
+                                                                <TrashIcon style={{ fontSize: '16px', marginLeft: '5px' }} onClick={() => deleteFile(index, true)}/>
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-center justify-center w-full gap-1">
@@ -676,10 +679,6 @@ const GuardianForm: React.FC<GuardianFormProps> = ({
                     const parsedGuardians = JSON.parse(storedGuardians) as GuardianWithFiles[];
                     setGuardians(parsedGuardians.map(guardian => ({
                         ...guardian,
-                        passportFile: null,
-                        deathCertificateFile: null,
-                        isPassportUploading: false,
-                        isDeathCertificateUploading: false
                     })));
 
                 } catch (error) {

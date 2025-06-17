@@ -24,14 +24,14 @@ const MajorSelection: React.FC<Props> = ({ primaryMajorId, admissionMajorIds, de
                 Degree Information
             </h3>
             <div className="flex flex-col">
-                <div className="flex items-center space-x-5 ">
+                <div className="flex items-center space-x-5 mb-2"> {/* Added mb-2 */}
                     <label className="p-2 font-medium w-48">Degree:</label>
                     <div className="p-4 w-[400px]">
                         {degree ? degree : 'N/A'}
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-5 ">
+                <div className="flex items-center space-x-5 mb-2"> {/* Added mb-2 */}
                     <label className="p-2 font-medium w-48">Primary Major:</label>
                     <div className="p-4 w-[400px]">
                         {getMajorName(primaryMajorId)}
@@ -40,17 +40,16 @@ const MajorSelection: React.FC<Props> = ({ primaryMajorId, admissionMajorIds, de
 
                 {admissionMajorIds.length > 0 ? (
                     admissionMajorIds.map((majorId: number, index: number) => (
-                        <div key={majorId} className="flex items-center space-x-5"> {/* Added flex and space-x-5 */}
-                            <label className="p-2 font-medium w-48">Major {index + 1}:</label> {/* Use a label here */}
+                        <div key={majorId} className="flex items-center space-x-5 mb-2"> {/* Added flex, space-x-5, and mb-2 */}
+                            <label className="p-2 font-medium w-48">Major {index + 1}:</label>
                             <div className="p-4 w-[400px]">
                                 {getMajorName(majorId)}
                             </div>
                         </div>
                     ))
                 ) : (
-                    <div className="flex items-center space-x-5">
-                        <label className="p-3 font-medium w-48"></label> {/* Placeholder label */}
-                        <div>No admission majors selected.</div>
+                    <div className="p-4 w-[400px] text-gray-500 italic"> {/* Added styling for message */}
+                        No admission majors selected.
                     </div>
                 )}
             </div>

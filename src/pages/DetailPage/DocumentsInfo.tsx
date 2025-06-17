@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, Space, Typography } from 'antd';
+import {  Space, Typography } from 'antd';
+import Button from '../../components/Buttons/Button';
+import DownloadIcon from '../../assets/icons/DownloadIcon';
 
 const { Text } = Typography;
 
@@ -53,8 +55,15 @@ const DocumentsInfo: React.FC<Props> = ({ documents }) => {
             });
     };
 
+    const formatDocumentType = (type: string): string => {
+        if (!type) return '';
+        return type
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (match) => match.toUpperCase());
+    };
+
     return (
-        <div className="w-full mb-40">
+        <div className="w-full mb-16">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="text-md text-[#4570EA] font-semibold">Documents</h3>
             </div>
@@ -64,25 +73,27 @@ const DocumentsInfo: React.FC<Props> = ({ documents }) => {
                         <div className="flex items-center space-x-5 mb-2">
                             <label className="p-3 font-medium w-48">Document Type:</label>
                             <div className="p-4 w-[400px]">
-                                {document.type}
+                                {formatDocumentType(document.type)}
                             </div>
                         </div>
                         <div className="flex items-center space-x-5 mb-2">
                             <label className="p-3 font-medium w-48">Documents Files:</label>
-                            <div className="p-4 w-[400px]">
+                            <div className=" w-[400px]">
                                 {document.documentFilePaths && document.documentFilePaths.length > 0 ? (
                                     <ul>
                                         {document.documentFilePaths.map((path, idx) => {
+                                            if (!path) return null; // Handle potentially null paths
                                             const filename = path.split('/').pop() || 'document'; // Dosya adını çıkar
                                             return (
                                                 <li key={idx}>
                                                     <Space direction="horizontal" align="center">
                                                         <Text>{getFileIcon(path)}</Text>
-                                                        <Button type="primary" size="small" onClick={(e) => {
+                                                        <Button                                                             className="flex items-center gap-2 px-4 py-2 bg-white border border-[#4570EA] text-[#4570EA]  rounded-full "
+ onClick={(e) => {
                                                             e.preventDefault();
                                                             downloadFile(path, filename); // Fonksiyonu doğru parametrelerle çağır
-                                                        }}>
-                                                            Download File
+                                                        }}> <DownloadIcon className="w-4 h-4" />
+                                                            Download 
                                                         </Button>
                                                     </Space>
                                                 </li>

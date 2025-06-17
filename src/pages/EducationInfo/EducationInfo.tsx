@@ -1,4 +1,4 @@
-import { Input, Space, Button, DatePicker, message, Spin } from "antd";
+import { Input, Space, Button, DatePicker, message, Spin, Select } from "antd";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Moment } from "moment";
@@ -16,9 +16,14 @@ interface EducationInformation {
     files: string[];
     filePaths: string[];
     isUploading: boolean;
+    documentType: DocumentType | null;  // Add documentType
 }
 
 type EducationInformationKey = keyof EducationInformation;
+
+export type DocumentType =
+    | 'school_certificate'
+    | 'diploma';
 
 const EducationInfo = () => {
     const navigate = useNavigate();
@@ -31,6 +36,7 @@ const EducationInfo = () => {
             files: [],
             filePaths: [],
             isUploading: false,
+            documentType: null,  // Initialize documentType
         },
     ]);
 
@@ -111,11 +117,23 @@ const EducationInfo = () => {
                 files: [],
                 filePaths: [],
                 isUploading: false,
+                documentType: null
             };
             return newEducationInfos;
         });
 
         message.success('File deleted successfully');
+    };
+
+    const handleDocumentTypeChange = (index: number, value: DocumentType | null) => {
+        setEducationInfos((prevEducationInfos) => {
+            const newEducationInfos = [...prevEducationInfos];
+            newEducationInfos[index] = {
+                ...newEducationInfos[index],
+                documentType: value,
+            };
+            return newEducationInfos;
+        });
     };
 
     const handleFileChange = async (
@@ -142,6 +160,10 @@ const EducationInfo = () => {
 
             const formData = new FormData();
             formData.append('path', file);
+            // formData.append('documentType', educationInfos[index].documentType || '');  // Add documentType to form data
+            if(educationInfos[index].documentType){
+                formData.append('documentType', educationInfos[index].documentType!)
+            }
 
             uploadFile(formData, {
                 onSuccess: (data: any) => {
@@ -189,6 +211,7 @@ const EducationInfo = () => {
                 files: [],
                 filePaths: [],
                 isUploading: false,
+                documentType: null, // Initialize documentType
             },
         ]);
 
@@ -230,6 +253,10 @@ const EducationInfo = () => {
 
             if (!info.files || info.files.length === 0) {
                 toast.error(`Certificate of graduation is required`);
+                return;
+            }
+            if (!info.documentType) {
+                toast.error(`Document Type is required`);
                 return;
             }
         }
@@ -320,6 +347,37 @@ const EducationInfo = () => {
                                 />
                             </Space>
                         </div>
+
+                        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                            <label className="w-44 font-[400] text-[14px] self-center">
+                                Certificate Type
+                            </label>
+                            <Space>
+                                <Select
+                                    placeholder="Select Document Type"
+                                    className="w-[400px] h-[40px] border-[#DFE5EF] rounded-md"
+                                    value={educationInfo.documentType || undefined}
+                                    onChange={(value) => handleDocumentTypeChange(index, value as DocumentType | null)}
+                                
+                                    options={[
+                                        { value: 'school_certificate', label: 'School Certificate' },
+                                        // { value: 'passport', label: 'Passport' },
+                                        // { value: 'military_document', label: 'Military Document' },
+                                        // { value: 'information', label: 'Information' },
+                                        // { value: 'relationship_tree', label: 'Relationship Tree' },
+                                        // { value: 'medical_record', label: 'Medical Record' },
+                                        // { value: 'description', label: 'Description' },
+                                        // { value: 'terjiimehal', label: 'Terjiimehal' },
+                                        // { value: 'labor_book', label: 'Labor Book' },
+                                        // { value: 'Dushundirish', label: 'Dushundirish' },
+                                        // { value: 'nika_haty', label: 'Nika Haty' },
+                                        // { value: 'death_certificate', label: 'Death Certificate' },
+                                        { value: 'diploma', label: 'Diploma' },
+                                    ]}
+                                />
+                            </Space>
+                        </div>
+
 
                         <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
                             <label className="w-44 font-[400] text-[14px] self-center">

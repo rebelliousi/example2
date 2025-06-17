@@ -1,12 +1,14 @@
 import React from 'react';
-import { Button, Space, Typography } from 'antd';
+import { Space, Typography } from 'antd';
+import DownloadIcon from '../../assets/icons/DownloadIcon';
+import Button from '../../components/Buttons/Button';
 
 const { Text } = Typography;
 
 interface Olympic {
     type: string;
     description: string;
-    olympicFilePaths?: string[] | string; // undefined olabilir, string veya string[] olabilir
+    olympicFilePaths?: string[] | string;
 }
 
 interface Props {
@@ -23,9 +25,14 @@ const OlympicsInfo: React.FC<Props> = ({ olympics }) => {
         const extension = getFileExtension(filename).toLowerCase();
         switch (extension) {
             case 'pdf': return '📄';
-            case 'doc': case 'docx': return 'Word';
-            case 'xls': case 'xlsx': return 'Excel';
-            case 'jpg': case 'jpeg': case 'png': case 'gif': return '🖼️';
+            case 'doc':
+            case 'docx': return 'Word';
+            case 'xls':
+            case 'xlsx': return 'Excel';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif': return '🖼️';
             default: return '';
         }
     };
@@ -50,12 +57,17 @@ const OlympicsInfo: React.FC<Props> = ({ olympics }) => {
             })
             .catch(error => {
                 console.error('Download error:', error);
-
             });
     };
 
+    const formatOlympicType = (type: string): string => {
+        return type
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (match) => match.toUpperCase());
+    };
+
     return (
-        <div className="w-full mb-40">
+        <div className="w-full mb-16">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="text-md text-[#4570EA] font-semibold">
                     Olympic Participation
@@ -63,12 +75,11 @@ const OlympicsInfo: React.FC<Props> = ({ olympics }) => {
             </div>
             {olympics.map((olympic, index) => (
                 <div key={index} className="mb-4 p-4 rounded relative">
-
                     <div className="flex flex-col">
                         <div className="flex items-center space-x-5 mb-2">
                             <label className="p-3 font-medium w-48">Olympic Type:</label>
                             <div className="p-4 w-[400px]">
-                                {olympic.type}
+                                {formatOlympicType(olympic.type)}
                             </div>
                         </div>
                         <div className="flex items-center space-x-5 mb-2">
@@ -79,46 +90,55 @@ const OlympicsInfo: React.FC<Props> = ({ olympics }) => {
                         </div>
                         <div className="flex items-center space-x-5 mb-2">
                             <label className="p-3 font-medium w-48">Olympic Files:</label>
-                            <div className="p-4 w-[400px]">
+                            <div className=" w-[400px]">
                                 {(() => {
                                     if (olympic.olympicFilePaths && typeof olympic.olympicFilePaths === 'string') {
-                                        // olympicFilePaths bir string ise
+                                        const filename = olympic.olympicFilePaths.substring(olympic.olympicFilePaths.lastIndexOf('/') + 1);
                                         return (
                                             <ul>
                                                 <li key={0}>
                                                     <Space direction="horizontal" align="center">
                                                         <Text>{getFileIcon(olympic.olympicFilePaths)}</Text>
-                                                        <Button type="primary" size="small" onClick={(e) => {
-                                                            e.preventDefault();
-                                                            downloadFile(olympic.olympicFilePaths, olympic.olympicFilePaths.substring(olympic.olympicFilePaths.lastIndexOf('/') + 1));
-                                                        }}>
-                                                            Download File
+                                                        <Button
+                                                            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#4570EA] text-[#4570EA]  rounded-full "
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                downloadFile(olympic.olympicFilePaths as string, filename);
+                                                            }}
+                                                        >
+                                                            <DownloadIcon className="w-4 h-4" />
+                                                            Download
                                                         </Button>
                                                     </Space>
                                                 </li>
                                             </ul>
                                         );
                                     } else if (olympic.olympicFilePaths && Array.isArray(olympic.olympicFilePaths) && olympic.olympicFilePaths.length > 0) {
-                                        // olympicFilePaths bir array ise
                                         return (
                                             <ul>
-                                                {olympic.olympicFilePaths.map((path, idx) => (
-                                                    <li key={idx}>
-                                                        <Space direction="horizontal" align="center">
-                                                            <Text>{getFileIcon(path)}</Text>
-                                                            <Button type="primary" size="small" onClick={(e) => {
-                                                                e.preventDefault();
-                                                                downloadFile(path, path.substring(path.lastIndexOf('/') + 1));
-                                                            }}>
-                                                                Download File
-                                                            </Button>
-                                                        </Space>
-                                                    </li>
-                                                ))}
+                                                {olympic.olympicFilePaths.map((path, idx) => {
+                                                    const filename = path.substring(path.lastIndexOf('/') + 1);
+                                                    return (
+                                                        <li key={idx}>
+                                                            <Space>
+                                                                <Text>{getFileIcon(path)}</Text>
+                                                                <Button
+                                                            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#4570EA] text-[#4570EA]  rounded-full "
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        downloadFile(path, filename);
+                                                                    }}
+                                                                >
+                                                                    <DownloadIcon className="w-4 h-4" />
+                                                                    Download
+                                                                </Button>
+                                                            </Space>
+                                                        </li>
+                                                    );
+                                                })}
                                             </ul>
                                         );
                                     } else {
-                                        // olympicFilePaths undefined veya boş ise
                                         return <div>No files uploaded.</div>;
                                     }
                                 })()}

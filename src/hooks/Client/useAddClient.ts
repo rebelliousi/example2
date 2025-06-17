@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api";
-import { toast } from 'react-hot-toast'; // Import toast library
+
 
 export type GuardianRelation = 'mother' | 'father' | 'grandparent' | 'sibling' | 'uncle' | 'aunt';
 export type OlympicType = 'area' | 'region' | 'state' | 'international' | 'other';
@@ -17,6 +17,10 @@ export type DocumentType =
   | 'Dushundirish'
     'nika_haty'
     'death_certificate'
+      'passport'
+      'diploma'
+      
+
 
 export interface GuardianDocument {
   type: Exclude<DocumentType, 'school_certificate' | 'information'>;
